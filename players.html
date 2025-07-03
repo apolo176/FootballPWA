@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Temporada</title>
+    <link rel="manifest" href="manifest.json" />
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+
+    <!-- Firestore -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <script src="main.js" defer></script>
+</head>
+<body>
+    <h1>Jugadores</h1>
+        <form id="playerForm">
+        <input type="text" id="name" name="name" placeholder="Nombre" required />
+        <input type="number" id="goals" name="goals" placeholder="Goles" min="0" value="0" required />
+        <input type="number" id="assists" name="assists" placeholder="Asistencias" min="0" value="0" required />
+        <input type="number" id="minutes" name="minutes" placeholder="Minutos jugados" min="0" value="0" required />
+        <input type="number" id="yellowCards" name="yellowCards" placeholder="Tarjetas amarillas" min="0" value="0" required />
+        <input type="number" id="redCards" name="redCards" placeholder="Tarjetas rojas" min="0" value="0" required />
+        <button type="submit">Agregar jugador</button>
+    </form>
+   
+    <ul id="playerList"></ul>
+    
+</body>
+</html>

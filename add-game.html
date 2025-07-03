@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Insertar Partido</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <button onclick="history.back()" class="secondary-btn">← Volver</button>
+  <main>
+    <h1>Insertar Partido</h1>
+    <form id="gameForm">
+      <label>
+        Fecha y hora:
+        <input type="datetime-local" id="dateTime" required />
+      </label>
+      <label>
+        Estadio:
+        <input type="text" id="stadium" required />
+      </label>
+      <label>
+        Ciudad:
+        <input type="text" id="city" required />
+      </label>
+      <label>
+        Árbitro (opcional):
+        <input type="text" id="referee" />
+      </label>
+      <label>
+        Escudo rival (≤2 MB):
+        <input type="file" id="logoFile" accept="image/*" required />
+      </label>
+      <label>
+        Nombre rival:
+        <input type="text" id="rivalName" required />
+      </label>
+      <label>
+        ¿Somos locales?
+        <input type="checkbox" id="isLocal" />
+      </label>
+      <button type="submit" class="primary-btn">Guardar Partido</button>
+    </form>
+    <div id="status"></div>
+  </main>
+
+  <!-- Firebase + Storage -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  <script>
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyDe5kV8p9GnYb1MKSlMZnajeyARDzCe2DU",
+  authDomain: "firestore1-4590c.firebaseapp.com",
+  projectId: "firestore1-4590c",
+  storageBucket: "firestore1-4590c.appspot.com",
+  messagingSenderId: "108637054681",
+  appId: "1:108637054681:web:9f07fc8bb2201c309640c8",
+  measurementId: "G-V3EVS5XF2Z"
+};
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    const form = document.getElementById('gameForm');
+    const status = document.getElementById('status');
+
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      status.textContent = 'Subiendo…';
+      const file = document.getElementById('logoFile').files[0];
+      if (file.size > 2 * 1024 * 1024) {
+        return status.textContent = 'Error: el escudo debe pesar ≤2 MB';
+      }
+      // Genera nombre único y sube a Storage
+      const path = `assets/rivales/${Date.now()}_${file.name}`;
+        const snap = await storage.ref(path).put(file);
+        console.log('Uploading to bucket:', firebase.app().options.storageBucket);
+        console.log('File size:', file.size);
+
+        // Obtén la URL completa para mostrar
+        const logoUrl = await snap.ref.getDownloadURL();
+      // Guarda datos en Firestore
+      await db.collection('games').add({
+        dateTime: firebase.firestore.Timestamp.fromDate(new Date(document.getElementById('dateTime').value)),
+        stadium: document.getElementById('stadium').value,
+        city: document.getElementById('city').value,
+        referee: document.getElementById('referee').value || null,
+        rivalLogoUrl: logoUrl,
+        rivalName: document.getElementById('rivalName').value,
+        local: document.getElementById('isLocal').checked,
+        scoreHome: null,
+        scoreAway: null
+      });
+
+      status.textContent = 'Partido guardado';
+      form.reset();
+    });
+  </script>
+</body>
+</html>

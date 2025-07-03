@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Próximos Partidos</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Menú (puedes reutilizar tu nav aquí) -->
+  <nav id="sidebar">…</nav>
+  <button id="menu-btn">☰</button>
+
+  <main>
+    <h1>Próximos partidos</h1>
+    <ul id="gamesList" class="cards-container"></ul>
+
+    <button id="addGameBtn" class="primary-btn">Insertar partido</button>
+  </main>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script>
+    // Tu configuración Firebase
+    const firebaseConfig = {
+      apiKey: "...",
+      authDomain: "...",
+      projectId: "...",
+      storageBucket: "...",
+      messagingSenderId: "...",
+      appId: "..."
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const gamesList = document.getElementById('gamesList');
+    const addBtn = document.getElementById('addGameBtn');
+
+    // Carga en tiempo real
+    db.collection('games')
+      .orderBy('dateTime')
+      .onSnapshot(snapshot => {
+        gamesList.innerHTML = '';
+        snapshot.forEach(doc => {
+          const g = doc.data();
+          // Formato: icono + nombre arriba/abajo, resultado o “–” si no jugado
+          const li = document.createElement('li');
+          li.className = 'card game-card';
+          li.innerHTML = `
+            <div class="team">
+                <img src="${ g.local ? LOCAL_LOGO_URL : g.rivalLogoUrl }" class="shield" />
+                <span class="team-name">${ g.local ? 'Nuestro Equipo' : g.rivalName }</span>
+            </div>
+            <div class="score">
+              ${g.scoreHome != null
+                ? `${g.scoreHome} – ${g.scoreAway}`
+                : `<span class="placeholder">–</span>`}
+            </div>
+            <div class="team">
+              <img src="${g.local ? g.rivalLogoUrl : 'assets/escudo_local.png'}" class="shield" />
+              <span class="team-name">${g.local ? g.rivalName : 'Nuestro Equipo'}</span>
+            </div>
+            <div class="details">
+              <small>${new Date(g.dateTime.toDate()).toLocaleString()}</small>
+              <small>${g.stadium}, ${g.city}</small>
+            </div>`;
+          gamesList.appendChild(li);
+        });
+      });
+
+    // Navegar a form de inserción
+    addBtn.addEventListener('click', () => {
+      window.location.href = 'add-game.html';
+    });
+  </script>
+</body>
+</html>
