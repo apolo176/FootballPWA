@@ -3,3 +3,269 @@ body {
   padding: 1em;
   background: #f9f9f9;
 }
+.cards-container { list-style:none; padding:0; margin:0; display:grid; gap:1rem; }
+.game-card { display:flex; flex-direction:column; align-items:center; padding:1rem; background:#fff; border-radius:8px; }
+.game-card .team { display:flex; flex-direction:column; align-items:center; }
+.shield { width:50px; height:50px; object-fit:contain; margin-bottom:0.5rem; }
+.team-name { font-weight:bold; text-align:center; }
+.score { font-size:1.5rem; margin:0.5rem 0; }
+.placeholder { color:#bbb; }
+.details { text-align:center; font-size:0.85rem; color:#666; }
+.primary-btn { display:block; width:100%; padding:1rem; margin-top:1rem; background:#2c3e50; color:#fff; border:none; border-radius:8px; font-size:1rem; cursor:pointer; }
+* {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0; font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+    transition: background-color 0.3s;
+  }
+  /* Contenedor general */
+  .container {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+  /* Menú lateral a la derecha */
+  nav {
+  position: fixed;
+  top: 0; right: 0;
+  width: 250px;
+  height: 100%;
+  background-color: #2c3e50;
+  color: white;
+  transform: translateX(250px);
+  transition: transform 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  z-index: 1000;
+}
+
+/* Menú abierto */
+nav.open {
+  transform: translateX(0);
+}
+nav ul li .nav-link {
+  display: block;             /* ocupa todo el ancho */
+  padding: 1rem 1.2rem;       /* mismo acolchado que antes */
+  color: inherit;             /* mismo color de texto */
+  text-decoration: none;      /* quita subrayado */
+  font-size: 1.1rem;          /* igual que el botón */
+  transition: background 0.2s;
+  cursor: pointer;
+}
+nav ul li .nav-link:hover {
+  background-color: rgba(236,240,241,0.1);
+}
+/* Contenido principal sin margen por defecto */
+main {
+  margin: 0 20px 20px 20px;
+  padding: 20px;
+  overflow-y: auto;
+  transition: margin 0.3s ease;
+  max-width: 100%;
+}
+
+/* En desktop, el contenido se desplaza cuando menú está abierto */
+@media (min-width: 700px) {
+  main.shifted {
+    margin-right: 270px; /* 250 menú + 20px margen */
+  }
+}
+
+/* En móvil, el menú se superpone y el contenido NO se desplaza */
+@media (max-width: 699px) {
+  main.shifted {
+    margin-right: 20px; /* Igual que sin menú */
+  }
+}
+  /*nav {
+    position: fixed;
+    top: 0; right: 0;
+    width: 250px;
+    height: 100%;
+    background-color: #2c3e50;
+    color: white;
+    transform: translateX(250px);
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    z-index: 1000;
+  }
+  nav.open {
+    transform: translateX(0);
+  }*/
+  nav header {
+    padding: 20px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    position: relative;
+    z-index: 1100;
+  }
+  nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex-grow: 1;
+    overflow-y: auto;
+  }
+  nav ul li {
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  nav ul li button {
+    width: 100%;
+    padding: 15px 20px;
+    text-align: left;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.1rem;
+    cursor: pointer;
+  }
+  nav ul li button:hover {
+    background-color: #34495e;
+  }
+  /* Sección inferior menú: modo oscuro + perfil */
+  .menu-footer {
+    padding: 20px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  /* Toggle modo oscuro con fondo para indicar estado */
+  .dark-mode-toggle {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .dark-mode-toggle input[type="checkbox"] {
+    display: none;
+  }
+  .toggle-icons {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    padding: 5px 10px;
+  }
+  /* Iconos sol y luna */
+  .toggle-icons svg {
+    width: 20px;
+    height: 20px;
+    fill: white;
+    transition: fill 0.3s;
+    border-radius: 50%;
+    padding: 2px;
+  }
+  /* Fondo distinto según el toggle */
+  #darkModeToggle:not(:checked) ~ .toggle-icons .icon-sun {
+    background: #f39c12;
+    fill: white;
+  }
+  #darkModeToggle:not(:checked) ~ .toggle-icons .icon-moon {
+    fill: rgba(255,255,255,0.5);
+    background: transparent;
+  }
+  #darkModeToggle:checked ~ .toggle-icons .icon-moon {
+    background: #f1c40f;
+    fill: white;
+  }
+  #darkModeToggle:checked ~ .toggle-icons .icon-sun {
+    fill: rgba(255,255,255,0.5);
+    background: transparent;
+  }
+  .dark-mode-toggle label {
+    color: white;
+    font-size: 1rem;
+    margin-left: 10px;
+  }
+  .profile {
+    display: flex;
+    align-items: center;
+  }
+  .profile img {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    margin-right: 10px;
+  }
+  .profile span {
+    font-weight: bold;
+  }
+  /* Contenido principal */
+ /* main {
+    margin: 0 20px 20px 20px;
+    padding: 20px;
+    overflow-y: auto;
+    transition: margin 0.3s ease;
+    max-width: 100%;
+  }
+  main.shifted {
+    margin-right: 270px; /* 250 menú + 20px margen 
+  }
+  */
+  /* Botón menú fijo izquierda */
+  #menu-btn {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    background-color: #2c3e50;
+    border: none;
+    color: white;
+    font-size: 1.8rem;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    z-index: 1100; /* Sobre todo */
+    transition: left 0.3s ease;
+  }
+  /* Tarjetas resumen en grid responsive */
+  .cards-container {
+    display: grid;
+    gap: 15px;
+  }
+  @media (min-width: 700px) {
+    .cards-container {
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+  }
+  @media (max-width: 699px) {
+    .cards-container {
+      grid-template-columns: 1fr;
+    }
+  }
+  .card {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  }
+  .card h2 {
+    margin-top: 0;
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+  }
+  /* Modo oscuro */
+  body.dark {
+    background-color: #121212;
+    color: #ddd;
+  }
+  body.dark nav {
+    background-color: #1e1e1e;
+  }
+  body.dark nav ul li button:hover {
+    background-color: #333;
+  }
+  body.dark main {
+    background-color: #121212;
+  }
+  body.dark .card {
+    background-color: #1e1e1e;
+    box-shadow: none;
+  }
