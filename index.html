@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Dashboard Temporada</title>
 <link rel="stylesheet" href="style.css" />
-
+<script src="sidebar.js"></script>
 </head>
 <body>
 
@@ -14,6 +14,7 @@
   <ul>
     <li><a href="players.html" class="nav-link">Jugadores</a></li>
     <li><a href="next-games.html" class="nav-link">Proximos partidos</a></li>
+    <li><a href="trainings.html" class="nav-link">Entrenamientos</a></li>
     <li><a href="advanced-stats.html" class="nav-link">Estadísticas Avanzadas</a></li>
   </ul>
 
@@ -43,7 +44,7 @@
 
 <button id="menu-btn" aria-label="Abrir/cerrar menú">&#9776;</button>
 
-<main id="mainContent" tabindex="0">
+  <main id="content" class="container-root">
   <img src="images.png"/>
   <h1>Bienvenido</h1>
 
@@ -87,7 +88,7 @@
 </main>
 
 <script>
-  const menuBtn = document.getElementById('menu-btn');
+      const menuBtn = document.getElementById('menu-btn');
   const sidebar = document.getElementById('sidebar');
   const mainContent = document.getElementById('mainContent');
   const darkModeToggle = document.getElementById('darkModeToggle');
@@ -100,6 +101,7 @@
   darkModeToggle.addEventListener('change', () => {
     document.body.classList.toggle('dark', darkModeToggle.checked);
   });
+
 </script>
 
 </body>

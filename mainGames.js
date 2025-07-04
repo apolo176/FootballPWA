@@ -12,41 +12,13 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    const table = document.getElementById('playersTable');
-    const tableBody = table.querySelector('tbody');
-
-    const addBtn = document.getElementById('addPlayerBtn');
-    addBtn.addEventListener('click', () => {
-      window.location.href = 'add-player.html';
-    });
-
+  
+  const gamesList = document.getElementById('gamesList');
+const addBtn = document.getElementById('addGameBtn');
   // Función para agregar jugador
-
-
-  // Escuchar cambios en tiempo real y actualizar lista
-  db.collection("players").onSnapshot(snapshot => {
-      tableBody.innerHTML = '';
-    snapshot.forEach(doc => {
-      const p = doc.data();
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${p.name}</td>
-          <td>${p.position || '-'}</td>
-          <td>${p.dorsal || '-'}</td>
-          <td>${p.goals}</td>
-          <td>${p.assists}</td>
-          <td>${p.minutes}</td>
-          <td>${p.yellowCards}</td>
-          <td>${p.redCards}</td>
-        `;
-        tableBody.appendChild(tr);
-    });
-  });
   
   // --- Partidos ---
-    const gamesList = document.getElementById('gamesList');
-const addBtnGames = document.getElementById('addGameBtn');
-if (gamesList && addBtnGames) {
+if (gamesList && addBtn) {
   db.collection('games')
     .orderBy('dateTime')
     .onSnapshot(snapshot => {
@@ -73,5 +45,7 @@ if (gamesList && addBtnGames) {
       });
     });
 
-
+  addBtn.addEventListener('click', () => {
+    window.location.href = 'add-game.html';
+  });
 }

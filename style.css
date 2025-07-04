@@ -1,36 +1,115 @@
-body {
-  font-family: sans-serif;
-  padding: 1em;
-  background: #f9f9f9;
-}
-.cards-container { list-style:none; padding:0; margin:0; display:grid; gap:1rem; }
-.game-card { display:flex; flex-direction:column; align-items:center; padding:1rem; background:#fff; border-radius:8px; }
-.game-card .team { display:flex; flex-direction:column; align-items:center; }
-.shield { width:50px; height:50px; object-fit:contain; margin-bottom:0.5rem; }
-.team-name { font-weight:bold; text-align:center; }
-.score { font-size:1.5rem; margin:0.5rem 0; }
-.placeholder { color:#bbb; }
-.details { text-align:center; font-size:0.85rem; color:#666; }
-.primary-btn { display:block; width:100%; padding:1rem; margin-top:1rem; background:#2c3e50; color:#fff; border:none; border-radius:8px; font-size:1rem; cursor:pointer; }
+/* --- Globales y Resets --- */
 * {
-    box-sizing: border-box;
-  }
-  body {
-    margin: 0; font-family: Arial, sans-serif;
-    background-color: #f5f5f5;
-    transition: background-color 0.3s;
-  }
-  /* Contenedor general */
-  .container {
-    display: flex;
-    height: 100vh;
-    overflow: hidden;
-  }
-  /* Menú lateral a la derecha */
-  nav {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  background-color: #f0f2f5;
+  color: #333;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  transition: background-color 0.3s ease; /* Transición para modo oscuro */
+}
+
+/* --- Contenedor Principal (para contenido centralizado, si aplica) --- */
+.container {
+  max-width: 600px;
+  margin: 2rem auto;
+  background: white;
+  padding: 1.5rem 2rem;
+  border-radius: 8px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+  margin-bottom: 1rem;
+  text-align: center;
+  color: #007bff;
+}
+
+/* --- Botones --- */
+.primary-btn {
+  display: block; /* Originalmente era inline-block, pero se usa con width: 100% en game-card */
+  width: 100%; /* Ajuste para game-card */
+  padding: 0.7rem 1.5rem;
+  margin-top: 1rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.primary-btn:hover {
+  background-color: #0056b3;
+}
+
+.secondary-btn {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  margin: 1rem; /* Posiblemente este margin necesite ser más específico según el contexto */
+  transition: background-color 0.3s ease;
+}
+
+.secondary-btn:hover {
+  background-color: #565e64;
+}
+
+/* --- Formularios --- */
+.form label {
+  display: block;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.form input[type="text"],
+.form input[type="datetime-local"] {
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 1rem;
+  margin-top: 0.3rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  transition: border-color 0.3s ease;
+}
+
+.form input[type="text"]:focus,
+.form input[type="datetime-local"]:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+
+/* --- Mensajes de Estado --- */
+.status {
+  margin-top: 1rem;
+  font-weight: 600;
+  color: #28a745;
+  text-align: center;
+}
+
+/* --- Navegación / Sidebar --- */
+#sidebar,
+nav { /* Unificado nav y #sidebar, ya que cumplen roles similares */
   position: fixed;
-  top: 0; right: 0;
-  width: 250px;
+  top: 0;
+  right: 0;
+  width: 250px; /* Ancho consistente */
   height: 100%;
   background-color: #2c3e50;
   color: white;
@@ -40,71 +119,321 @@ body {
   flex-direction: column;
   justify-content: space-between;
   z-index: 1000;
+  padding: 1.5rem 1rem; /* Añadido padding para consistencia */
+  box-sizing: border-box;
 }
 
-/* Menú abierto */
+#sidebar.open,
 nav.open {
-  transform: translateX(0);
+  transform:translateX(0px);
 }
+
+#sidebar header,
+nav header {
+  padding: 0 0 20px 0; /* Ajustado padding */
+  font-size: 1.5rem;
+  font-weight: bold;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  z-index: 1100;
+  margin-bottom: 1.5rem; /* Espacio debajo del header */
+}
+
+#sidebar ul,
+nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+#sidebar ul li,
+nav ul li {
+  margin-bottom: 0.8rem; /* Espacio entre elementos de lista */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Consistencia con nav original */
+}
+
+#sidebar ul li:last-child,
+nav ul li:last-child {
+  border-bottom: none; /* Elimina borde del último elemento */
+}
+
+#sidebar ul li .nav-link,
 nav ul li .nav-link {
-  display: block;             /* ocupa todo el ancho */
-  padding: 1rem 1.2rem;       /* mismo acolchado que antes */
-  color: inherit;             /* mismo color de texto */
-  text-decoration: none;      /* quita subrayado */
-  font-size: 1.1rem;          /* igual que el botón */
-  transition: background 0.2s;
+  display: block;
+  padding: 0.7rem 1.2rem; /* Ajustado padding para consistencia */
+  color: #ecf0f1;
+  text-decoration: none;
+  font-size: 1.1rem;
+  transition: background-color 0.2s;
   cursor: pointer;
+  border-radius: 4px; /* Añadido border-radius para consistencia */
+  font-weight: 600; /* Añadido font-weight */
 }
-nav ul li .nav-link:hover {
-  background-color: rgba(236,240,241,0.1);
+
+#sidebar ul li .nav-link:hover,
+nav ul li .nav-link:hover,
+#sidebar ul li .nav-link.active {
+  background-color: #34495e;
+  color: #1abc9c; /* Color de hover/activo */
 }
-/* Contenido principal sin margen por defecto */
+
+/* Sección inferior menú: modo oscuro + perfil */
+.menu-footer {
+  padding-top: 20px; /* Padding superior */
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* Alineación para elementos */
+  gap: 15px; /* Espacio entre elementos del footer */
+  margin-top: 1rem; /* Espacio con el contenido superior */
+}
+
+/* Toggle modo oscuro */
+.dark-mode-toggle {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.dark-mode-toggle input[type="checkbox"] {
+  display: none;
+}
+
+.toggle-icons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  padding: 5px 10px;
+}
+
+.toggle-icons svg {
+  width: 20px;
+  height: 20px;
+  fill: white;
+  transition: fill 0.3s;
+  border-radius: 50%;
+  padding: 2px;
+}
+
+#darkModeToggle:not(:checked) ~ .toggle-icons .icon-sun {
+  background: #f39c12;
+  fill: white;
+}
+
+#darkModeToggle:not(:checked) ~ .toggle-icons .icon-moon {
+  fill: rgba(255, 255, 255, 0.5);
+  background: transparent;
+}
+
+#darkModeToggle:checked ~ .toggle-icons .icon-moon {
+  background: #f1c40f;
+  fill: white;
+}
+
+#darkModeToggle:checked ~ .toggle-icons .icon-sun {
+  fill: rgba(255, 255, 255, 0.5);
+  background: transparent;
+}
+
+.dark-mode-toggle label {
+  color: white;
+  font-size: 1rem;
+  margin-left: 10px;
+}
+
+/* Perfil de usuario */
+.profile {
+  display: flex;
+  align-items: center;
+}
+
+.profile img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.profile span {
+  font-weight: bold;
+}
+
+/* --- Contenido Principal --- */
 main {
-  margin: 0 20px 20px 20px;
+  margin: 0 20px 20px 20px; /* Margen base para el contenido */
   padding: 20px;
   overflow-y: auto;
   transition: margin 0.3s ease;
   max-width: 100%;
 }
 
-/* En desktop, el contenido se desplaza cuando menú está abierto */
+.container-root { /* Contenedor principal a la derecha del sidebar, si el sidebar no es fijo */
+  margin-left: 2rem; /* 250px del sidebar + 20px de margen */
+  max-width: 95%;
+  padding: 2rem 1.5rem;
+  box-sizing: border-box;
+  min-height: 100vh;
+  background: #f7f9fc;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  transition: margin 0.3s ease; /* Transición para el desplazamiento */
+}
+
+/* Botón de menú fijo (si aplica) */
+#menu-btn {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  background-color: #2c3e50;
+  border: none;
+  color: white;
+  font-size: 1.8rem;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  z-index: 1100;
+  transition: left 0.3s ease; /* Aunque right es el que cambia en este caso */
+}
+
+/* --- Tarjetas (Cards) --- */
+.cards-container {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 15px;
+}
+
+.card { /* Estilos generales para cualquier tipo de tarjeta */
+  background: white;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.card h2 {
+  margin-top: 0;
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+}
+
+.game-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  gap: 1rem; /* Añadido para consistencia */
+}
+
+.game-card .team {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 1 1 40%;
+  min-width: 130px; /* Ajuste para evitar encogimiento excesivo */
+}
+
+.shield {
+  width: 40px; /* Tamaño consistente */
+  height: 40px; /* Tamaño consistente */
+  object-fit: contain;
+  margin-bottom: 0.5rem; /* Ajuste para .game-card .team */
+  border-radius: 4px; /* Añadido border-radius */
+  border: 1px solid #ddd; /* Añadido borde */
+}
+
+.team-name {
+  font-weight: 700;
+  font-size: 1rem;
+  text-align: center; /* Originalmente centrado, ahora para flex-direction: column */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.score {
+  font-weight: 700;
+  font-size: 1.3rem;
+  width: 50px;
+  text-align: center;
+  color: #007bff;
+  margin: 0.5rem 0; /* Ajuste para .game-card */
+}
+
+.placeholder {
+  color: #bbb;
+  font-style: italic; /* Añadido para consistencia */
+}
+
+.details {
+  flex-basis: 100%; /* Ajuste para ocupar ancho completo en columna */
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: #666;
+  text-align: center;
+}
+
+/* --- Modo Oscuro --- */
+body.dark {
+  background-color: #121212;
+  color: #ddd;
+}
+
+body.dark nav,
+body.dark #sidebar {
+  background-color: #1e1e1e;
+}
+
+body.dark nav ul li .nav-link:hover,
+body.dark #sidebar ul li .nav-link:hover {
+  background-color: #333;
+}
+
+body.dark main,
+body.dark .container-root {
+  background-color: #121212;
+}
+
+body.dark .card,
+body.dark .game-card {
+  background-color: #1e1e1e;
+  box-shadow: none;
+}
+
+/* --- Media Queries --- */
+/* Escritorio y tablet (ancho mínimo de 700px) */
 @media (min-width: 700px) {
+  .cards-container {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+
   main.shifted {
     margin-right: 270px; /* 250 menú + 20px margen */
   }
 }
 
-/* En móvil, el menú se superpone y el contenido NO se desplaza */
+/* Móviles (ancho máximo de 699px, o 600px para tarjetas) */
 @media (max-width: 699px) {
   main.shifted {
     margin-right: 20px; /* Igual que sin menú */
   }
-}
-  /*nav {
-    position: fixed;
-    top: 0; right: 0;
-    width: 250px;
-    height: 100%;
-    background-color: #2c3e50;
-    color: white;
-    transform: translateX(250px);
-    transition: transform 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    z-index: 1000;
+
+  #sidebar,
+  nav {
+
+    padding: 0.5rem 1rem;
+    transform: translateX(1000px); /* Siempre visible en móvil */
   }
-  nav.open {
-    transform: translateX(0);
-  }*/
-  nav header {
-    padding: 20px;
-    font-size: 1.5rem;
-    font-weight: bold;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-    position: relative;
-    z-index: 1100;
-  }
+
+  #sidebar ul,
   nav ul {
     list-style: none;
     padding: 0;
@@ -112,160 +441,167 @@ main {
     flex-grow: 1;
     overflow-y: auto;
   }
+
+  #sidebar ul li,
   nav ul li {
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    margin-bottom: 0;
+    border-bottom: none; /* Elimina borde en móvil */
   }
-  nav ul li button {
-    width: 100%;
-    padding: 15px 20px;
-    text-align: left;
-    background: none;
-    border: none;
-    color: white;
-    font-size: 1.1rem;
-    cursor: pointer;
+
+  #sidebar header,
+  nav header {
+    padding: 1rem;
+    margin:0;
   }
-  nav ul li button:hover {
-    background-color: #34495e;
-  }
-  /* Sección inferior menú: modo oscuro + perfil */
-  .menu-footer {
-    padding: 20px;
-    border-top: 1px solid rgba(255,255,255,0.1);
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  /* Toggle modo oscuro con fondo para indicar estado */
-  .dark-mode-toggle {
-    display: flex;
-    align-items: center;
-    margin-bottom: 15px;
-    cursor: pointer;
-    user-select: none;
-  }
-  .dark-mode-toggle input[type="checkbox"] {
-    display: none;
-  }
-  .toggle-icons {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 20px;
-    padding: 5px 10px;
-  }
-  /* Iconos sol y luna */
-  .toggle-icons svg {
-    width: 20px;
-    height: 20px;
-    fill: white;
-    transition: fill 0.3s;
-    border-radius: 50%;
-    padding: 2px;
-  }
-  /* Fondo distinto según el toggle */
-  #darkModeToggle:not(:checked) ~ .toggle-icons .icon-sun {
-    background: #f39c12;
-    fill: white;
-  }
-  #darkModeToggle:not(:checked) ~ .toggle-icons .icon-moon {
-    fill: rgba(255,255,255,0.5);
-    background: transparent;
-  }
-  #darkModeToggle:checked ~ .toggle-icons .icon-moon {
-    background: #f1c40f;
-    fill: white;
-  }
-  #darkModeToggle:checked ~ .toggle-icons .icon-sun {
-    fill: rgba(255,255,255,0.5);
-    background: transparent;
-  }
-  .dark-mode-toggle label {
-    color: white;
-    font-size: 1rem;
-    margin-left: 10px;
-  }
-  .profile {
-    display: flex;
-    align-items: center;
-  }
-  .profile img {
-    width: 40px; height: 40px;
-    border-radius: 50%;
-    margin-right: 10px;
-  }
-  .profile span {
-    font-weight: bold;
-  }
-  /* Contenido principal */
- /* main {
-    margin: 0 20px 20px 20px;
-    padding: 20px;
-    overflow-y: auto;
-    transition: margin 0.3s ease;
+
+  .container-root {
+    margin: 1rem; /* Sin margen en móvil */
     max-width: 100%;
+    padding: 1rem;
   }
-  main.shifted {
-    margin-right: 270px; /* 250 menú + 20px margen 
+
+  .game-card {
+    flex-direction: column;
+    align-items: center; /* Centra los elementos */
+    gap: 0.5rem;
+    padding: 1rem 0.8rem;
   }
-  */
-  /* Botón menú fijo izquierda */
-  #menu-btn {
-    position: fixed;
-    top: 15px;
-    right: 15px;
-    background-color: #2c3e50;
-    border: none;
-    color: white;
-    font-size: 1.8rem;
-    padding: 8px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    z-index: 1100; /* Sobre todo */
-    transition: left 0.3s ease;
+
+  .team {
+    flex: unset; /* Resetea el flex para que no se estire */
+    width: 100%;
+    justify-content: center; /* Alinea los equipos a la izquierda */
+    gap: 1rem;
   }
-  /* Tarjetas resumen en grid responsive */
-  .cards-container {
-    display: grid;
-    gap: 15px;
+
+  .shield {
+    width: 35px;
+    height: 35px;
   }
-  @media (min-width: 700px) {
-    .cards-container {
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    }
-  }
-  @media (max-width: 699px) {
-    .cards-container {
-      grid-template-columns: 1fr;
-    }
-  }
-  .card {
-    background: white;
-    border-radius: 8px;
-    padding: 15px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-  }
-  .card h2 {
-    margin-top: 0;
+
+  .score {
+    width: auto;
     font-size: 1.2rem;
-    margin-bottom: 10px;
+    margin: 0.5rem 0;
+    text-align: left;
   }
-  /* Modo oscuro */
-  body.dark {
-    background-color: #121212;
-    color: #ddd;
+
+  .details {
+    text-align: left;
+    font-size: 0.75rem;
   }
-  body.dark nav {
-    background-color: #1e1e1e;
+
+  .checkbox-label {
+    font-size: 0.9rem;
   }
-  body.dark nav ul li button:hover {
-    background-color: #333;
+
+  .container { /* Ajustes para el contenedor principal en móvil */
+    margin: 1rem;
+    padding: 1rem 1.2rem;
   }
-  body.dark main {
-    background-color: #121212;
+
+  h1 {
+    font-size: 1.5rem;
   }
-  body.dark .card {
-    background-color: #1e1e1e;
-    box-shadow: none;
+
+  .form label {
+    font-size: 0.9rem;
   }
+
+  .form input[type="text"],
+  .form input[type="datetime-local"] {
+    font-size: 1rem;
+  }
+
+  .primary-btn,
+  .secondary-btn {
+    width: 100%;
+    font-size: 1.1rem;
+    padding: 0.8rem;
+  }
+}
+.table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 1.5rem;
+}
+
+/* Estilos básicos de la tabla */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.table th,
+.table td {
+  padding: 0.5rem 0.8rem;
+  text-align: center;
+  border: 1px solid #ddd;
+  white-space: nowrap;
+}
+
+.table thead th {
+  background: #007BFF;
+  color: white;
+  font-weight: 600;
+}
+
+.table thead th[colspan] {
+  background: #0056b3;
+}
+
+/* Zebra stripe */
+.table tbody tr:nth-child(odd) {
+  background: #f9f9f9;
+}
+
+/* Anchos de columna aproximados (ajústalos según convenga) */
+.table th:nth-child(1),
+.table td:nth-child(1) { width: 25%; }   /* Nombre */
+.table th:nth-child(2),
+.table td:nth-child(2) { width: 15%; }   /* Posición */
+.table th:nth-child(3),
+.table td:nth-child(3) { width: 10%; }   /* Dorsal */
+.table th:nth-child(4),
+.table td:nth-child(4) { width: 10%; }   /* Goles */
+.table th:nth-child(5),
+.table td:nth-child(5) { width: 10%; }   /* Asistencias */
+.table th:nth-child(6),
+.table td:nth-child(6) { width: 15%; }   /* Minutos */
+.table th:nth-child(7),
+.table td:nth-child(7) { width: 7%; }    /* Amarillas */
+.table th:nth-child(8),
+.table td:nth-child(8) { width: 8%; }    /* Rojas */
+
+/* Botón Agregar jugador */
+#addPlayerBtn {
+  display: block;
+  width: 100%;
+  max-width: 200px;
+  margin: 0 auto 2rem auto;
+  padding: 0.6rem;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+#addPlayerBtn:hover {
+  background: #218838;
+}
+
+/* Responsive: en móviles, fuente un poco mayor y scroll */
+@media (max-width: 600px) {
+  .table {
+    font-size: 1rem;
+  }
+
+  .table th,
+  .table td {
+    padding: 0.4rem 0.6rem;
+  }
+}
