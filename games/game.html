@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestión de Partido</title>
+  <link rel="stylesheet" href="/style.css">
+  <script type= "module" src="/games/game-details.js" defer></script>
+
+</head>
+<body>
+  <main id="game-page">
+    <h1>Gestión de Partido</h1>
+
+    <!-- Fases -->
+    <div id="phase-selector" class="tabs">
+        <button class="tab active" data-phase="pre">Previa</button>
+        <button class="tab" data-phase="live">En Vivo</button>
+        <button class="tab" data-phase="post">Resumen</button>
+    </div>
+
+    <div id="gameDetails"></div>
+    <!-- PREVIA -->
+    <section id="pre-phase" class="phase active">
+      <h2>Alineación y Convocados</h2>
+      <div>
+        <h3>Titulares</h3>
+        <div id="titulares-list" class = "player-list"></div>
+      </div>
+      <div>
+        <h3>Suplentes</h3>
+        <div id="suplentes-list" class = "player-list"></div>
+      </div>
+      <div>
+        <h3>No convocados</h3>
+        <div id="descartados-list" class = "player-list"></div>
+      </div>
+      <button id="start-match">Empezar Partido</button>
+    </section>
+
+    <!-- EN VIVO -->
+    <section id="live-phase" class="phase">
+      <h2>Partido en Vivo</h2>
+      <div id="players-events"></div>
+
+      <h3>Eventos Especiales</h3>
+      <button id="own-goal">Gol en Contra</button>
+
+      <button id="end-match">Finalizar Partido</button>
+      <h3>Cambios</h3>
+        <div>
+            <select id="player-out"></select>
+            <select id="player-in"></select>
+            <button id="confirm-sub">Registrar Cambio</button>
+        </div>
+    </section>
+
+    <!-- POST -->
+    <section id="post-phase" class="phase">
+      <h2>Resumen del Partido</h2>
+      <div id="timeline"></div>
+    </section>
+  </main>
+
+
+</body>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+</html>

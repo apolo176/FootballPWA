@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Insertar Partido</title>
+  <link rel="stylesheet" href="/style.css" />
+  <script src="/sidebar.js"></script>
+
+</head>
+<body>
+
+  <button onclick="history.back()" class="secondary-btn">← Volver</button>
+  <main id="content" class="container-root">
+    <h1>Insertar Partido</h1>
+    <form id="gameForm" class="form">
+      <label>
+        Fecha y hora:
+        <input type="datetime-local" id="dateTime" required />
+      </label>
+      <label>
+        Estadio:
+        <input type="text" id="stadium" placeholder="Ej: Estadio Nacional" required />
+      </label>
+      <label>
+        Ciudad:
+        <input type="text" id="city" placeholder="Ej: Madrid" required />
+      </label>
+      <label>
+        Árbitro (opcional):
+        <input type="text" id="referee" placeholder="Nombre del árbitro" />
+      </label>
+
+      <!-- Imagen temporalmente comentada -->
+      <!--
+      <label>
+        Escudo rival (≤2 MB):
+        <input type="file" id="logoFile" accept="image/*" />
+      </label>
+      -->
+
+      <label>
+        Nombre rival:
+        <input type="text" id="rivalName" placeholder="Ej: Real Madrid" required />
+      </label>
+      <label class="checkbox-label">
+        <input type="checkbox" id="isLocal" />
+        ¿Somos locales?
+      </label>
+      <button type="submit" class="primary-btn">Guardar Partido</button>
+    </form>
+    <div id="status" class="status"></div>
+  </main>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDe5kV8p9GnYb1MKSlMZnajeyARDzCe2DU",
+      authDomain: "firestore1-4590c.firebaseapp.com",
+      projectId: "firestore1-4590c",
+      storageBucket: "firestore1-4590c.appspot.com",
+      messagingSenderId: "108637054681",
+      appId: "1:108637054681:web:9f07fc8bb2201c309640c8",
+      measurementId: "G-V3EVS5XF2Z"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const form = document.getElementById('gameForm');
+    const status = document.getElementById('status');
+
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      status.textContent = 'Guardando partido…';
+
+      try {
+        const gameRef = db.collection('games').doc(); // crea referencia con ID único
+        const gameId = gameRef.id;
+
+        await  gameRef.set({
+          gameId: gameId,
+          dateTime: firebase.firestore.Timestamp.fromDate(new Date(document.getElementById('dateTime').value)),
+          stadium: document.getElementById('stadium').value,
+          city: document.getElementById('city').value,
+          referee: document.getElementById('referee').value || null,
+          rivalLogoUrl: null,
+          rivalName: document.getElementById('rivalName').value,
+          local: document.getElementById('isLocal').checked,
+          scoreHome: null,
+          scoreAway: null,
+
+          // 🔽 Nuevas propiedades
+          phase: "pre", // fase inicial
+          lineup: [],   // jugadores titulares (vacío inicialmente)
+          bench: [],    // suplentes
+          events: []    // aquí luego guardarás los eventos del partido
+
+        });
+        status.textContent = 'Partido guardado correctamente.';
+        form.reset();
+      } catch (error) {
+        status.textContent = 'Error guardando partido: ' + error.message;
+        console.error(error);
+      }
+    });
+  </script>
+</body>
+</html>

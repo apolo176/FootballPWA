@@ -1,0 +1,18 @@
+<script>  form.addEventListener("submit", e => {
+    e.preventDefault();
+    console.log("submit")
+    const player = {
+        name: document.getElementById("name").value,
+        goals: parseInt(document.getElementById("goals").value),
+        assists: parseInt(document.getElementById("assists").value),
+        minutes: parseInt(document.getElementById("minutes").value),
+        yellowCards: parseInt(document.getElementById("yellowCards").value),
+        redCards: parseInt(document.getElementById("redCards").value)
+    };
+    db.collection("players").add(player)
+      .then(() => {
+        form.reset();
+        console.log("Jugador agregado");
+      })
+      .catch(error => console.error("Error agregando jugador:", error));
+  });</script>
