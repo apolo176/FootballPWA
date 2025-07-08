@@ -42,36 +42,3 @@
         tableBody.appendChild(tr);
     });
   });
-  
-  // --- Partidos ---
-    const gamesList = document.getElementById('gamesList');
-const addBtnGames = document.getElementById('addGameBtn');
-if (gamesList && addBtnGames) {
-  db.collection('games')
-    .orderBy('dateTime')
-    .onSnapshot(snapshot => {
-      gamesList.innerHTML = '';
-      snapshot.forEach(doc => {
-        const g = doc.data();
-        const li = document.createElement('li');
-        li.className = 'card game-card';
-        li.innerHTML = `
-          <div class="team">
-            <span class="team-name">${g.local ? 'C.D Peña' : g.rivalName}</span>
-          </div>
-          <div class="score">
-            ${g.scoreHome != null ? `${g.scoreHome} – ${g.scoreAway}` : `<span class="placeholder">–</span>`}
-          </div>
-          <div class="team">
-            <span class="team-name">${g.local ? g.rivalName : 'Nuestro Equipo'}</span>
-          </div>
-          <div class="details">
-            <small>${new Date(g.dateTime.toDate()).toLocaleString()}</small>
-            <small>${g.stadium}, ${g.city}</small>
-          </div>`;
-        gamesList.appendChild(li);
-      });
-    });
-
-
-}

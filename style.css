@@ -605,3 +605,110 @@ body.dark .game-card {
     padding: 0.4rem 0.6rem;
   }
 }
+.tabs {
+  display: flex;
+  border-bottom: 2px solid #ccc;
+  margin-bottom: 1em;
+}
+
+.tab {
+  padding: 10px 20px;
+  background-color: #f9f9f9;
+  border: 1px solid #ccc;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  margin-right: 5px;
+  font-weight: bold;
+  color: #555;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.tab:hover {
+  background-color: #eee;
+}
+
+.tab.active {
+  background-color: #ffffff;
+  border-color: #ccc #ccc white;
+  color: #d9534f; /* rojo suave */
+  position: relative;
+  top: 2px;
+  z-index: 1;
+}
+
+/* Contenedor de fase */
+.phase {
+  display: none;
+  padding: 1em;
+  border: 1px solid #ccc;
+  border-radius: 0 8px 8px 8px;
+  background-color: #fff;
+}
+
+.phase.active {
+  display: block;
+}
+
+
+
+.player-list {
+  border: 1px solid #ccc;
+  min-height: 100px;
+  padding: 10px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+}
+
+.player-card {
+  background: white;
+  border: 1px solid #bbb;
+  padding: 8px 12px;
+  margin: 5px 0;
+  border-radius: 6px;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.player-card:active {
+  opacity: 0.7;
+}
+
+#timeline {
+  position: relative;
+  width: 100%;
+  padding: 2rem 0;
+  border-left: 4px solid #ccc;
+  margin-left: 50%;
+}
+
+.timeline-item {
+  position: relative;
+  margin: 1rem 0;
+}
+
+.event-content {
+  position: absolute;
+  background: #f9f9f9;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  max-width: 300px;
+  font-size: 0.95rem;
+}
+
+.event-content.left {
+  left: -340px;
+  text-align: right;
+}
+
+.event-content.right {
+  left: 20px;
+}
+
+.vertical-line {
+  height: 20px;
+  width: 4px;
+  background-color: #ccc;
+  margin-left: -2px;
+}
