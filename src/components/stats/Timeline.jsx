@@ -6,12 +6,12 @@ const MARKER_EVENTS = new Set(['match_start', 'half_time', 'second_half', 'match
 
 export function Timeline({ timeline }) {
   if (!timeline?.length) return (
-    <div className="text-center py-8 text-slate-600 text-sm">No events recorded</div>
+    <div className="text-center py-8 text-slate-400 text-sm">Sin eventos registrados</div>
   )
 
   return (
     <div className="relative pl-8">
-      <div className="absolute left-4 top-0 bottom-0 w-px bg-slate-700" />
+      <div className="absolute left-4 top-0 bottom-0 w-px bg-slate-200 dark:bg-slate-700" />
 
       <div className="space-y-0.5">
         {timeline.map((event) => {
@@ -21,16 +21,16 @@ export function Timeline({ timeline }) {
           if (isMarker) {
             return (
               <div key={event.id} className="relative flex items-center gap-3 py-2.5">
-                <div className="absolute -left-5 w-2 h-2 rounded-full bg-slate-500 border-2 border-slate-900" />
-                <span className="text-xs text-slate-500 font-mono">{formatMinute(event.elapsedSeconds)}</span>
-                <span className="text-xs text-slate-400 font-semibold">{meta.emoji} {meta.label}</span>
+                <div className="absolute -left-5 w-2 h-2 rounded-full bg-slate-400 dark:bg-slate-500 border-2 border-white dark:border-slate-900" />
+                <span className="text-xs text-slate-400 font-mono">{formatMinute(event.elapsedSeconds)}</span>
+                <span className="text-xs text-slate-500 font-semibold">{meta.emoji} {meta.label}</span>
               </div>
             )
           }
 
           return (
             <div key={event.id} className="relative flex items-start gap-3 py-2">
-              <div className="absolute -left-5 flex items-center justify-center w-6 h-6 rounded-full bg-slate-800 border border-slate-700 text-sm shrink-0">
+              <div className="absolute -left-5 flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm shrink-0">
                 {meta.emoji}
               </div>
               <div className="min-w-0 flex-1">
@@ -38,25 +38,22 @@ export function Timeline({ timeline }) {
                   <span className="text-xs font-mono text-slate-400 shrink-0">
                     {formatMinute(event.elapsedSeconds)}
                   </span>
-                  <span className="text-sm font-semibold text-white truncate">
+                  <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">
                     {event.playerName ?? meta.label}
                   </span>
                 </div>
-                {/* Assist */}
                 {event.assistPlayerName && (
-                  <div className="text-xs text-emerald-400/70 mt-0.5 ml-8">
+                  <div className="text-xs text-emerald-600 dark:text-emerald-400/70 mt-0.5 ml-8">
                     🎯 {event.assistPlayerName}
                   </div>
                 )}
-                {/* Substitution */}
                 {event.subPlayerName && (
-                  <div className="text-xs text-violet-400/70 mt-0.5 ml-8">
+                  <div className="text-xs text-violet-600 dark:text-violet-400/70 mt-0.5 ml-8">
                     ↔ {event.subPlayerName}
                   </div>
                 )}
-                {/* Card reason */}
                 {event.reason && (
-                  <div className="text-xs text-slate-500 italic mt-0.5 ml-8">
+                  <div className="text-xs text-slate-400 italic mt-0.5 ml-8">
                     {event.reason}
                   </div>
                 )}

@@ -21,7 +21,7 @@ export default function App() {
   }, [theme])
 
   return (
-    <div className="flex flex-col h-full bg-slate-950 dark:bg-slate-950 text-slate-50">
+    <div className="flex flex-col h-full bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50">
       <main className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <Routes>
           <Route path="/"         element={<Home />}      />

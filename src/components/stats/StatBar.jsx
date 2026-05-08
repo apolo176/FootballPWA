@@ -13,10 +13,10 @@ export function StatBar({ label, value, max, color = 'emerald', unit = '' }) {
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between text-sm">
-        <span className="text-slate-400">{label}</span>
-        <span className="font-bold text-white tabular-nums">{value}{unit}</span>
+        <span className="text-slate-500 dark:text-slate-400">{label}</span>
+        <span className="font-bold text-slate-900 dark:text-white tabular-nums">{value}{unit}</span>
       </div>
-      <div className="h-2 bg-slate-700/60 rounded-full overflow-hidden">
+      <div className="h-2 bg-slate-100 dark:bg-slate-700/60 rounded-full overflow-hidden">
         <div
           className={cn('h-full rounded-full transition-all duration-700', colorMap[color] ?? colorMap.emerald)}
           style={{ width: `${pct}%` }}
@@ -28,19 +28,19 @@ export function StatBar({ label, value, max, color = 'emerald', unit = '' }) {
 
 export function MiniStat({ label, value, sub, color }) {
   const colorMap = {
-    emerald: 'text-emerald-400',
-    red: 'text-red-400',
-    amber: 'text-amber-400',
-    sky: 'text-sky-400',
-    slate: 'text-slate-300',
-    yellow: 'text-yellow-300',
+    emerald: 'text-emerald-600 dark:text-emerald-400',
+    red:     'text-red-600 dark:text-red-400',
+    amber:   'text-amber-600 dark:text-amber-400',
+    sky:     'text-sky-600 dark:text-sky-400',
+    slate:   'text-slate-600 dark:text-slate-300',
+    yellow:  'text-yellow-600 dark:text-yellow-300',
   }
 
   return (
-    <div className="flex flex-col items-center gap-0.5 py-3 px-2 bg-slate-800/40 rounded-2xl">
+    <div className="flex flex-col items-center gap-0.5 py-3 px-2 bg-slate-100 dark:bg-slate-800/40 rounded-2xl">
       <span className={cn('text-3xl font-black tabular-nums', colorMap[color] ?? colorMap.slate)}>{value}</span>
-      <span className="text-xs font-semibold text-slate-400 text-center leading-tight">{label}</span>
-      {sub && <span className="text-xs text-slate-600">{sub}</span>}
+      <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 text-center leading-tight">{label}</span>
+      {sub && <span className="text-xs text-slate-400 dark:text-slate-600">{sub}</span>}
     </div>
   )
 }

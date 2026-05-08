@@ -1,13 +1,9 @@
 import { useState, useCallback } from 'react'
 import {
-  DndContext,
-  DragOverlay,
-  PointerSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-  useDroppable,
-  useDraggable,
+  DndContext, DragOverlay,
+  PointerSensor, TouchSensor,
+  useSensor, useSensors,
+  useDroppable, useDraggable,
 } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { PitchSVG } from './PitchSVG'
@@ -15,23 +11,21 @@ import { FORMATIONS, FORMATION_NAMES } from '../../lib/constants'
 import { cn } from '../../lib/utils'
 import { useRosterStore } from '../../store/rosterStore'
 
-const PITCH_H = 65  // SVG viewBox height — used to convert y → CSS %
+const PITCH_H   = 65
+const MAX_BENCH = 6
+const POS_COLOR = { GK: 'bg-amber-500', DEF: 'bg-sky-500', MID: 'bg-emerald-500', FWD: 'bg-red-500' }
 
-// ── Slot: a droppable position on the pitch ────────────────────────────────
+// ── Pitch slot (droppable) ────────────────────────────────────────────────
 
 function PositionSlot({ slot, player, onTap }) {
   const { setNodeRef, isOver } = useDroppable({ id: slot.id })
-
   const cssY = ((slot.y / PITCH_H) * 100).toFixed(1)
 
   return (
     <div
       ref={setNodeRef}
       onClick={onTap}
-      className={cn(
-        'absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center',
-        'cursor-pointer touch-none'
-      )}
+      className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center cursor-pointer touch-none"
       style={{ left: `${slot.x}%`, top: `${cssY}%` }}
     >
       <div className={cn(
@@ -43,10 +37,13 @@ function PositionSlot({ slot, player, onTap }) {
             ? 'bg-emerald-500 border-emerald-300 text-white scale-105'
             : 'bg-slate-900/80 border-white/40 text-white/60',
       )}>
-        {player ? (player.number ?? '?') : <span className="text-[9px] leading-none">{slot.role}</span>}
+        {player
+          ? (player.number ?? '?')
+          : <span className="text-[9px] leading-none">{slot.role}</span>
+        }
       </div>
       {player && (
-        <div className="mt-0.5 px-1 py-0 bg-slate-900/80 rounded text-[8px] font-semibold text-white leading-tight max-w-12 text-center truncate">
+        <div className="mt-0.5 px-1 bg-slate-900/80 rounded text-[8px] font-semibold text-white leading-tight max-w-[3rem] text-center truncate">
           {player.name.split(' ')[0]}
         </div>
       )}
@@ -54,79 +51,109 @@ function PositionSlot({ slot, player, onTap }) {
   )
 }
 
-// ── Bench pool: droppable "remove from pitch" zone ───────────────────────
+// ── Draggable chip (used in both bench + descartados lists) ───────────────
 
-function BenchPool({ children }) {
-  const { setNodeRef, isOver } = useDroppable({ id: '__bench__' })
-  return (
-    <div
-      ref={setNodeRef}
-      className={cn(
-        'transition-colors rounded-xl p-2',
-        isOver ? 'bg-emerald-500/20 ring-2 ring-emerald-400' : 'bg-slate-800/40'
-      )}
-    >
-      {children}
-    </div>
-  )
-}
-
-// ── Draggable player chip ─────────────────────────────────────────────────
-
-function PlayerChip({ player, isAssigned }) {
+function DraggableChip({ player, suffix, onAction, actionLabel, actionColor = 'text-emerald-500 dark:text-emerald-400', disabled = false }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: player.id,
     data: { player },
   })
+  const posColor = POS_COLOR[player.position] ?? 'bg-slate-500'
 
   return (
     <div
       ref={setNodeRef}
-      {...listeners}
       {...attributes}
       className={cn(
-        'flex items-center gap-2 px-2.5 py-2 rounded-xl cursor-grab active:cursor-grabbing',
-        'select-none touch-none transition-all',
+        'flex items-center gap-2 px-2.5 py-2 rounded-xl',
+        'border border-slate-200 dark:border-slate-700/40',
+        'bg-slate-100 dark:bg-slate-800/60 select-none touch-none',
         isDragging ? 'opacity-30' : '',
-        isAssigned
-          ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-300'
-          : 'bg-slate-700/60 border border-slate-600/40 text-white',
       )}
       style={{ transform: CSS.Transform.toString(transform) }}
     >
-      <span className="w-6 h-6 flex items-center justify-center rounded-md bg-slate-700 text-xs font-black font-mono shrink-0">
-        {player.number ?? '?'}
-      </span>
-      <span className="text-xs font-medium truncate">{player.name}</span>
+      <div {...listeners} className="flex items-center gap-2 flex-1 min-w-0 cursor-grab active:cursor-grabbing">
+        <div className={cn('w-1 h-7 rounded-full shrink-0', posColor)} />
+        <span className="w-6 text-center font-black font-mono text-xs text-slate-500 dark:text-slate-300 shrink-0">
+          {player.number ?? '?'}
+        </span>
+        <span className="text-xs font-medium text-slate-900 dark:text-white truncate">{player.name}</span>
+      </div>
+      {onAction && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onAction() }}
+          disabled={disabled}
+          className={cn(
+            'w-6 h-6 flex items-center justify-center rounded-full shrink-0',
+            'text-base font-black transition-colors',
+            disabled ? 'text-slate-300 dark:text-slate-700 cursor-not-allowed' : `${actionColor} hover:bg-black/5 dark:hover:bg-white/10 active:scale-90`,
+          )}
+          title={actionLabel}
+        >
+          {suffix}
+        </button>
+      )}
     </div>
   )
 }
 
-// ── Floating drag overlay ────────────────────────────────────────────────
+// ── Drag overlay chip ─────────────────────────────────────────────────────
 
 function FloatingChip({ player }) {
   if (!player) return null
   return (
-    <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-500 shadow-xl shadow-emerald-500/40 text-white text-sm font-bold opacity-95">
-      <span className="w-6 h-6 flex items-center justify-center rounded-md bg-emerald-600 font-mono text-xs">
-        {player.number ?? '?'}
-      </span>
+    <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-500 shadow-xl shadow-emerald-500/40 text-white text-sm font-bold">
+      <span className="font-mono font-black">{player.number ?? '?'}</span>
       {player.name}
+    </div>
+  )
+}
+
+// ── Section header ────────────────────────────────────────────────────────
+
+function SectionHeader({ title, count, max }) {
+  const full = max !== undefined && count >= max
+  return (
+    <div className="flex items-center justify-between mb-2">
+      <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">{title}</span>
+      <span className={cn(
+        'text-xs font-bold px-2 py-0.5 rounded-lg',
+        full ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+      )}>
+        {max !== undefined ? `${count}/${max}` : count}
+        {full && ' · Max'}
+      </span>
     </div>
   )
 }
 
 // ── Main component ────────────────────────────────────────────────────────
 
-export function VisualPitch({ formation, assignments, onAssignmentsChange, onFormationChange }) {
+/**
+ * Visual pitch with drag-and-drop lineup.
+ *
+ * Props:
+ *   formation             string  — active formation key
+ *   assignments           object  — { slotId: playerId }
+ *   bench                 array   — playerIds on bench (max 6)
+ *   onAssignmentsChange   fn
+ *   onBenchChange         fn
+ *   onFormationChange     fn
+ */
+export function VisualPitch({
+  formation,
+  assignments,
+  bench = [],
+  onAssignmentsChange,
+  onBenchChange,
+  onFormationChange,
+}) {
   const { players } = useRosterStore()
   const [dragPlayerId, setDragPlayerId] = useState(null)
   const [selectorSlot, setSelectorSlot] = useState(null)
 
   const slots = FORMATIONS[formation] ?? FORMATIONS['4-3-3']
 
-  // Sensor config: require 8px movement or 200ms hold before activating drag.
-  // This prevents conflict with native scroll on mobile.
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(TouchSensor,   { activationConstraint: { delay: 200, tolerance: 8 } }),
@@ -134,48 +161,56 @@ export function VisualPitch({ formation, assignments, onAssignmentsChange, onFor
 
   const getPlayer = useCallback((id) => players.find(p => p.id === id), [players])
 
-  // Players currently on the pitch (assigned to a slot)
-  const assignedIds = new Set(Object.values(assignments))
+  // Derived sets
+  const assignedIds  = new Set(Object.values(assignments).filter(Boolean))
+  const benchSet     = new Set(bench)
+  const startingList = slots.map(s => assignments[s.id]).filter(Boolean)
+  const benchList    = players.filter(p => benchSet.has(p.id))
+  const descartados  = players.filter(p => !assignedIds.has(p.id) && !benchSet.has(p.id))
 
-  // Players available in the bench pool (not yet assigned)
-  const benchPlayers = players.filter(p => !assignedIds.has(p.id))
+  // ── Bench actions ──────────────────────────────────────────────────────
 
-  // ── Drag handlers ────────────────────────────────────────────────────────
+  const addToBench = useCallback((playerId) => {
+    if (bench.length >= MAX_BENCH) return
+    onBenchChange([...bench, playerId])
+  }, [bench, onBenchChange])
+
+  const removeFromBench = useCallback((playerId) => {
+    onBenchChange(bench.filter(id => id !== playerId))
+  }, [bench, onBenchChange])
+
+  // ── Drag handlers ──────────────────────────────────────────────────────
 
   const handleDragStart = ({ active }) => setDragPlayerId(active.id)
 
-  const handleDragEnd = ({ active, over }) => {
+  const handleDragEnd = useCallback(({ active, over }) => {
     setDragPlayerId(null)
-    if (!over) return
-
     const playerId = active.id
-    const targetId = over.id   // slot.id or '__bench__'
 
     const next = { ...assignments }
-
-    // Remove player from any current slot first
-    for (const slotId of Object.keys(next)) {
-      if (next[slotId] === playerId) delete next[slotId]
+    for (const sid of Object.keys(next)) {
+      if (next[sid] === playerId) delete next[sid]
     }
 
-    if (targetId !== '__bench__') {
-      // Swap: if target slot has someone, they go back to bench (removed)
-      next[targetId] = playerId
+    if (over && !over.id.startsWith('__')) {
+      next[over.id] = playerId
+      if (benchSet.has(playerId)) onBenchChange(bench.filter(id => id !== playerId))
     }
 
     onAssignmentsChange(next)
-  }
+  }, [assignments, bench, benchSet, onAssignmentsChange, onBenchChange])
 
-  // Tap on a slot opens a quick-pick list (touch fallback for drag)
-  const handleSlotTap = (slot) => {
-    setSelectorSlot(slot)
-  }
+  // ── Tap-on-slot quick picker ───────────────────────────────────────────
+
+  const handleSlotTap = (slot) => setSelectorSlot(slot)
 
   const handleQuickPick = (playerId) => {
     const next = { ...assignments }
-    // Clear previous assignment of this player
     for (const sid of Object.keys(next)) {
       if (next[sid] === playerId) delete next[sid]
+    }
+    if (playerId && benchSet.has(playerId)) {
+      onBenchChange(bench.filter(id => id !== playerId))
     }
     if (playerId) next[selectorSlot.id] = playerId
     else delete next[selectorSlot.id]
@@ -183,19 +218,23 @@ export function VisualPitch({ formation, assignments, onAssignmentsChange, onFor
     setSelectorSlot(null)
   }
 
+  const changeFormation = (f) => {
+    onFormationChange(f)
+    onAssignmentsChange({})
+  }
+
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      {/* Formation selector */}
+
+      {/* ── Formation pills ──────────────────────────────────────────────── */}
       <div className="flex gap-2 mb-3 flex-wrap">
         {FORMATION_NAMES.map(f => (
           <button
             key={f}
-            onClick={() => onFormationChange(f)}
+            onClick={() => changeFormation(f)}
             className={cn(
               'px-3 py-1.5 rounded-xl text-xs font-bold transition-all',
-              formation === f
-                ? 'bg-emerald-500 text-white'
-                : 'bg-slate-800 text-slate-400 hover:text-white'
+              formation === f ? 'bg-emerald-500 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white',
             )}
           >
             {f}
@@ -203,18 +242,15 @@ export function VisualPitch({ formation, assignments, onAssignmentsChange, onFor
         ))}
       </div>
 
-      {/* ── Pitch ─────────────────────────────────────────────────── */}
+      {/* ── Pitch ────────────────────────────────────────────────────────── */}
       <div
         className="relative w-full rounded-xl overflow-hidden bg-emerald-800"
         style={{ aspectRatio: '100 / 65' }}
       >
         <PitchSVG />
-
-        {/* Attack direction label */}
-        <div className="absolute top-1.5 left-1/2 -translate-x-1/2 text-[8px] text-white/40 font-bold uppercase tracking-widest">
-          Attack ↑
+        <div className="absolute top-1.5 left-1/2 -translate-x-1/2 text-[8px] text-white/40 font-bold uppercase tracking-widest pointer-events-none">
+          Ataque ↑
         </div>
-
         {slots.map(slot => (
           <PositionSlot
             key={slot.id}
@@ -225,98 +261,165 @@ export function VisualPitch({ formation, assignments, onAssignmentsChange, onFor
         ))}
       </div>
 
-      {/* ── Bench / Available pool ─────────────────────────────────── */}
-      <div className="mt-3">
-        <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">
-          Available Squad
-          <span className="ml-2 text-slate-600 normal-case font-normal">
-            · drag onto pitch or tap a slot
-          </span>
-        </div>
-        <BenchPool>
-          {benchPlayers.length === 0 ? (
-            <p className="text-xs text-slate-500 text-center py-2">All players assigned</p>
+      {/* ── Bench ────────────────────────────────────────────────────────── */}
+      <div className="mt-4">
+        <SectionHeader title="Banquillo" count={benchList.length} max={MAX_BENCH} />
+        <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/30 rounded-xl p-2 min-h-[3rem]">
+          {benchList.length === 0 ? (
+            <p className="text-xs text-slate-400 text-center py-2">
+              Toca <span className="text-emerald-600 dark:text-emerald-500 font-bold">+</span> en un jugador para añadirlo al banquillo
+            </p>
           ) : (
-            <div className="grid grid-cols-2 gap-1.5">
-              {benchPlayers.map(p => (
-                <PlayerChip key={p.id} player={p} isAssigned={false} />
+            <div className="space-y-1">
+              {benchList.map(p => (
+                <DraggableChip
+                  key={p.id}
+                  player={p}
+                  suffix="×"
+                  actionLabel="Quitar del banquillo"
+                  actionColor="text-red-500 dark:text-red-400"
+                  onAction={() => removeFromBench(p.id)}
+                />
               ))}
             </div>
           )}
-        </BenchPool>
-
-        {/* Assigned players (can drag back to bench) */}
-        {assignedIds.size > 0 && (
-          <div className="mt-2">
-            <div className="text-xs font-bold text-slate-600 uppercase tracking-widest mb-1.5">Starting XI</div>
-            <div className="grid grid-cols-2 gap-1.5">
-              {[...assignedIds].map(pid => {
-                const p = getPlayer(pid)
-                if (!p) return null
-                return <PlayerChip key={pid} player={p} isAssigned />
-              })}
-            </div>
-          </div>
-        )}
+        </div>
       </div>
 
-      {/* ── Drag overlay ─────────────────────────────────────────── */}
+      {/* ── Descartados / Not Called Up ───────────────────────────────────── */}
+      <div className="mt-4">
+        <SectionHeader title="Descartados" count={descartados.length} />
+        {descartados.length === 0 ? (
+          <p className="text-xs text-slate-400 text-center py-3">Todos los jugadores asignados o en el banquillo</p>
+        ) : (
+          <div className="space-y-1">
+            {descartados.map(p => (
+              <DraggableChip
+                key={p.id}
+                player={p}
+                suffix="+"
+                actionLabel={bench.length >= MAX_BENCH ? 'Banquillo lleno (6/6)' : 'Añadir al banquillo'}
+                actionColor="text-emerald-600 dark:text-emerald-400"
+                onAction={() => addToBench(p.id)}
+                disabled={bench.length >= MAX_BENCH}
+              />
+            ))}
+          </div>
+        )}
+        <p className="text-[10px] text-slate-400 text-center mt-2">
+          Arrastra al campo · Toca + para banquillo · Máx {MAX_BENCH} en el banquillo
+        </p>
+      </div>
+
+      {/* ── Drag overlay ─────────────────────────────────────────────────── */}
       <DragOverlay dropAnimation={null}>
         <FloatingChip player={dragPlayerId ? getPlayer(dragPlayerId) : null} />
       </DragOverlay>
 
-      {/* ── Quick-pick modal (tap fallback) ─────────────────────── */}
+      {/* ── Tap-on-slot picker ───────────────────────────────────────────── */}
       {selectorSlot && (
         <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={() => setSelectorSlot(null)}>
           <div className="absolute inset-0 bg-black/60" />
           <div
-            className="relative z-10 w-full max-w-md bg-slate-900 rounded-t-3xl p-5 animate-slide-up"
+            className="relative z-10 w-full max-w-md bg-white dark:bg-slate-900 rounded-t-3xl px-4 pt-4 pb-8 animate-slide-up"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-white">
-                {selectorSlot.role} — {assignments[selectorSlot.id] ? 'Replace' : 'Assign'} Player
+              <h3 className="font-bold text-slate-900 dark:text-white">
+                {selectorSlot.role} — {assignments[selectorSlot.id] ? 'Cambiar' : 'Asignar'} Jugador
               </h3>
-              <button onClick={() => setSelectorSlot(null)} className="text-slate-400 text-xl">✕</button>
+              <button onClick={() => setSelectorSlot(null)} className="text-slate-400 text-lg w-8 h-8 flex items-center justify-center">✕</button>
             </div>
 
-            <div className="space-y-1 max-h-64 overflow-y-auto no-scrollbar">
+            <div className="max-h-72 overflow-y-auto no-scrollbar space-y-1">
+              {/* Remove option */}
               {assignments[selectorSlot.id] && (
                 <button
                   onClick={() => handleQuickPick(null)}
-                  className="w-full text-left px-3 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-semibold"
+                  className="w-full text-left px-3 py-2.5 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400 text-sm font-semibold"
                 >
-                  ✕ Remove from slot
+                  ✕ Quitar del puesto
                 </button>
               )}
-              {players.map(p => {
-                const alreadyInOtherSlot = assignedIds.has(p.id) && assignments[selectorSlot.id] !== p.id
-                return (
-                  <button
-                    key={p.id}
-                    onClick={() => handleQuickPick(p.id)}
-                    className={cn(
-                      'w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors',
-                      assignments[selectorSlot.id] === p.id
-                        ? 'bg-emerald-500/20 border border-emerald-500/30 text-emerald-300'
-                        : alreadyInOtherSlot
-                          ? 'bg-slate-800/40 text-slate-500'
-                          : 'bg-slate-800/60 hover:bg-slate-700/60 text-white',
-                    )}
-                  >
-                    <span className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-700 text-xs font-bold font-mono shrink-0">
-                      {p.number ?? '?'}
-                    </span>
-                    <span className="flex-1 font-medium">{p.name}</span>
-                    <span className="text-xs text-slate-500">{p.position}</span>
-                    {alreadyInOtherSlot && <span className="text-[10px] text-slate-600">on pitch</span>}
-                  </button>
-                )
-              })}
+
+              {benchList.length > 0 && (
+                <>
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pt-2 pb-1">Banquillo</div>
+                  {benchList.map(p => (
+                    <PlayerPickerRow
+                      key={p.id}
+                      player={p}
+                      isCurrent={assignments[selectorSlot.id] === p.id}
+                      badge="Banquillo"
+                      badgeColor="text-amber-600 dark:text-amber-400"
+                      onClick={() => handleQuickPick(p.id)}
+                    />
+                  ))}
+                </>
+              )}
+
+              {descartados.length > 0 && (
+                <>
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pt-2 pb-1">Descartados</div>
+                  {descartados.map(p => (
+                    <PlayerPickerRow
+                      key={p.id}
+                      player={p}
+                      isCurrent={assignments[selectorSlot.id] === p.id}
+                      badge="—"
+                      badgeColor="text-slate-400"
+                      onClick={() => handleQuickPick(p.id)}
+                    />
+                  ))}
+                </>
+              )}
+
+              {startingList.length > 0 && (
+                <>
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pt-2 pb-1">En el campo (cambio)</div>
+                  {startingList
+                    .filter(pid => pid !== assignments[selectorSlot.id])
+                    .map(pid => {
+                      const p = getPlayer(pid)
+                      if (!p) return null
+                      return (
+                        <PlayerPickerRow
+                          key={pid}
+                          player={p}
+                          isCurrent={false}
+                          badge="Titular"
+                          badgeColor="text-emerald-600 dark:text-emerald-400"
+                          onClick={() => handleQuickPick(pid)}
+                        />
+                      )
+                    })
+                  }
+                </>
+              )}
             </div>
           </div>
         </div>
       )}
     </DndContext>
+  )
+}
+
+function PlayerPickerRow({ player, isCurrent, badge, badgeColor, onClick }) {
+  const posColor = POS_COLOR[player.position] ?? 'bg-slate-500'
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors',
+        isCurrent
+          ? 'bg-emerald-50 dark:bg-emerald-500/20 border border-emerald-300 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300'
+          : 'bg-slate-100 dark:bg-slate-800/60 hover:bg-slate-200 dark:hover:bg-slate-700/60 text-slate-900 dark:text-white',
+      )}
+    >
+      <div className={cn('w-1 h-6 rounded-full shrink-0', posColor)} />
+      <span className="w-7 text-center font-black font-mono text-xs text-slate-500 dark:text-slate-300 shrink-0">{player.number ?? '?'}</span>
+      <span className="flex-1 text-left font-medium truncate">{player.name}</span>
+      <span className={cn('text-xs font-semibold shrink-0', badgeColor)}>{badge}</span>
+    </button>
   )
 }

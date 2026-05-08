@@ -1,69 +1,65 @@
-import { useEffect, useRef, useCallback, useState } from 'react'
-import { useMatchStore } from '../store/matchStore'
+import { useEffect, useRef, useState, useCallback } from 'react'
+import { useMatchStore, getElapsedSeconds } from '../store/matchStore'
 import { PHASE } from '../lib/constants'
 
 /**
- * Manages the match timer and exposes all in-game actions.
- * Zero UI logic — this hook is 100% portable to React Native.
- * All store mutations go through here so pages stay purely presentational.
+ * Manages the match timer display and exposes all in-game actions.
+ *
+ * Timer design — immune to background tab throttling / phone sleep:
+ *   - Zustand stores timerStartedAt (epoch ms) and timerAccumulated (seconds).
+ *   - setInterval here is a DISPLAY TICKER only — it triggers re-renders so
+ *     the scoreboard clock updates every second. It never writes to the store.
+ *   - Elapsed time is always computed from Date.now() − timerStartedAt,
+ *     so a 30-second background delay shows the correct 30-second jump.
+ *
+ * Portable to React Native (replace setInterval with BackgroundTimer).
  */
 export function useMatchEngine() {
   const {
     activeMatch,
-    kickOff: storeKickOff,
-    endHalf,
-    startSecondHalf,
-    finishMatch,
+    kickOff:           storeKickOff,
+    startTimer:        storeStartTimer,
+    pauseTimer:        storePauseTimer,
+    endHalf:           storeEndHalf,
+    startSecondHalf:   storeStartSecondHalf,
+    finishMatch:       storeFinishMatch,
     logEvent,
     removeEvent,
-    setElapsed,
   } = useMatchStore()
 
-  const intervalRef = useRef(null)
-  const [isTimerRunning, setIsTimerRunning] = useState(false)
+  // ── Display ticker ────────────────────────────────────────────────────────
+  // Forces a re-render every second so the clock stays in sync with Date.now().
+  const [, setTick] = useState(0)
+  const tickRef = useRef(null)
 
-  const isLive    = activeMatch?.phase === PHASE.LIVE
-  const elapsed   = activeMatch?.elapsedSeconds ?? 0
-  const minute    = Math.floor(elapsed / 60)
+  const isTimerRunning = !!activeMatch?.timerStartedAt
+  const isLive         = activeMatch?.phase === PHASE.LIVE
 
-  // ── Timer primitives ─────────────────────────────────────────────────────
-
-  const startTimer = useCallback(() => {
-    if (intervalRef.current) return
-    setIsTimerRunning(true)
-    intervalRef.current = setInterval(() => {
-      const s = useMatchStore.getState().activeMatch?.elapsedSeconds ?? 0
-      setElapsed(s + 1)
-    }, 1000)
-  }, [setElapsed])
-
-  const stopTimer = useCallback(() => {
-    setIsTimerRunning(false)
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
-    }
-  }, [])
-
-  // Auto-start when match goes live; stop when it stops being live.
   useEffect(() => {
-    if (isLive && !intervalRef.current) startTimer()
-    if (!isLive) stopTimer()
-  }, [isLive]) // eslint-disable-line react-hooks/exhaustive-deps
+    if (isTimerRunning) {
+      tickRef.current = setInterval(() => setTick(t => t + 1), 1000)
+    } else {
+      clearInterval(tickRef.current)
+      tickRef.current = null
+    }
+    return () => clearInterval(tickRef.current)
+  }, [isTimerRunning])
 
-  useEffect(() => () => stopTimer(), [stopTimer])
+  // Always computed fresh — never stale from a throttled interval
+  const elapsed = getElapsedSeconds(activeMatch)
+  const minute  = Math.floor(elapsed / 60)
 
-  // ── Public actions ───────────────────────────────────────────────────────
+  // ── Public actions ────────────────────────────────────────────────────────
 
   const kickOff = useCallback(() => {
-    storeKickOff()
-    startTimer()
-  }, [storeKickOff, startTimer])
+    storeKickOff()   // sets phase=LIVE, timerStartedAt=Date.now()
+    if (navigator.vibrate) navigator.vibrate([50, 30, 50])
+  }, [storeKickOff])
 
   const pauseResume = useCallback(() => {
-    if (intervalRef.current) stopTimer()
-    else startTimer()
-  }, [startTimer, stopTimer])
+    if (isTimerRunning) storePauseTimer()
+    else storeStartTimer()
+  }, [isTimerRunning, storePauseTimer, storeStartTimer])
 
   const recordEvent = useCallback((type, extras = {}) => {
     logEvent({ type, ...extras })
@@ -71,22 +67,19 @@ export function useMatchEngine() {
   }, [logEvent])
 
   const handleEndHalf = useCallback(() => {
-    stopTimer()
-    endHalf()
-  }, [stopTimer, endHalf])
+    storeEndHalf()    // pauses timer + adds half_time event with wall-clock elapsed
+  }, [storeEndHalf])
 
   const handleSecondHalf = useCallback(() => {
-    startSecondHalf()
-    startTimer()
-  }, [startSecondHalf, startTimer])
+    storeStartSecondHalf()   // resumes timer + adds second_half event
+  }, [storeStartSecondHalf])
 
   const handleFinish = useCallback(() => {
-    stopTimer()
-    finishMatch()
-  }, [stopTimer, finishMatch])
+    storeFinishMatch()   // pauses timer + snapshots elapsed + adds match_end event
+  }, [storeFinishMatch])
 
   return {
-    match: activeMatch,
+    match:          activeMatch,
     elapsed,
     minute,
     isLive,

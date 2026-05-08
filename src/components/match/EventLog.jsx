@@ -14,13 +14,13 @@ export function EventLog({ events, onRemove, compact = false }) {
     .slice(0, compact ? 5 : undefined)
 
   if (visible.length === 0) {
-    return <div className="text-center py-8 text-slate-600 text-sm">No events yet</div>
+    return <div className="text-center py-8 text-slate-400 text-sm">No hay eventos aún</div>
   }
 
   return (
     <div className="space-y-1">
       {visible.map(event => {
-        const meta      = EVENT_META[event.type] ?? { emoji: '•', label: event.type, color: 'slate' }
+        const meta      = EVENT_META[event.type] ?? { emoji: '•', label: event.type }
         const player    = event.playerId    ? getPlayer(event.playerId)    : null
         const subPlayer = event.subPlayerId ? getPlayer(event.subPlayerId) : null
         const assist    = event.assistPlayerId ? getPlayer(event.assistPlayerId) : null
@@ -29,9 +29,10 @@ export function EventLog({ events, onRemove, compact = false }) {
           <div
             key={event.id}
             className={cn(
-              'flex items-start gap-3 px-3 py-2.5 rounded-xl',
-              'bg-slate-800/40 border border-slate-700/30',
-              'group transition-colors hover:bg-slate-800/70'
+              'flex items-start gap-3 px-3 py-2.5 rounded-xl group transition-colors',
+              'bg-white dark:bg-slate-800/40',
+              'border border-slate-200 dark:border-slate-700/30',
+              'hover:bg-slate-50 dark:hover:bg-slate-800/70',
             )}
           >
             <span className="text-lg leading-none mt-0.5">{meta.emoji}</span>
@@ -39,30 +40,26 @@ export function EventLog({ events, onRemove, compact = false }) {
               {formatMinute(event.elapsedSeconds)}
             </span>
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-semibold text-white truncate">
+              <div className="text-sm font-semibold text-slate-900 dark:text-white truncate">
                 {player?.name ?? meta.label}
               </div>
-              {/* Assist */}
               {assist && (
-                <div className="text-xs text-slate-400 mt-0.5">
-                  🎯 {assist.name}
-                </div>
+                <div className="text-xs text-slate-500 mt-0.5">🎯 {assist.name}</div>
               )}
-              {/* Substitution: player coming in */}
               {subPlayer && (
-                <div className="text-xs text-slate-400 mt-0.5">
-                  ← {subPlayer.name}
-                </div>
+                <div className="text-xs text-slate-500 mt-0.5">← {subPlayer.name}</div>
               )}
-              {/* Card reason */}
               {event.reason && (
-                <div className="text-xs text-slate-500 mt-0.5 italic">{event.reason}</div>
+                <div className="text-xs text-slate-400 mt-0.5 italic">{event.reason}</div>
+              )}
+              {event.goalType && (
+                <div className="text-xs text-slate-400 mt-0.5">{event.goalType}</div>
               )}
             </div>
             {onRemove && (
               <button
                 onClick={() => onRemove(event.id)}
-                className="opacity-0 group-hover:opacity-100 text-slate-600 hover:text-red-400 transition-all text-lg leading-none mt-0.5 shrink-0"
+                className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-all text-lg leading-none mt-0.5 shrink-0"
               >
                 ×
               </button>

@@ -3,39 +3,51 @@ import { persist } from 'zustand/middleware'
 import { PHASE, EVENT } from '../lib/constants'
 import { generateId, computeScore } from '../lib/utils'
 
+// ── Wall-clock elapsed helper ─────────────────────────────────────────────────
+// Source of truth is timerStartedAt (epoch ms) + timerAccumulated (seconds).
+// setInterval is ONLY used for UI re-renders — it never writes state.
+// This makes the timer immune to background tab throttling and phone sleep.
+export function getElapsedSeconds(match) {
+  if (!match) return 0
+  const acc       = match.timerAccumulated ?? 0
+  const startedAt = match.timerStartedAt
+  if (!startedAt) return acc
+  return acc + Math.floor((Date.now() - startedAt) / 1000)
+}
+
 const freshMatch = (data) => ({
-  id: generateId(),
-  createdAt: new Date().toISOString(),
-  date: data.date ?? new Date().toISOString().slice(0, 10),
-  opponent: data.opponent ?? 'Opponent',
-  venue: data.venue ?? 'home',
-  stadium: data.stadium ?? '',
-  competition: data.competition ?? '',
-  referee: data.referee ?? '',
-  formation: data.formation ?? '4-3-3',
-  assignments: data.assignments ?? {},  // slotId → playerId (visual pitch state)
-  lineup: data.lineup ?? [],            // derived: Object.values(assignments)
-  bench: data.bench ?? [],
-  phase: PHASE.PRE,
-  elapsedSeconds: 0,
-  score: { home: 0, away: 0 },
-  events: [],
+  id:               generateId(),
+  createdAt:        new Date().toISOString(),
+  date:             data.date        ?? new Date().toISOString().slice(0, 10),
+  opponent:         data.opponent    ?? 'Opponent',
+  venue:            data.venue       ?? 'home',
+  stadium:          data.stadium     ?? '',
+  competition:      data.competition ?? '',
+  referee:          data.referee     ?? '',
+  formation:        data.formation   ?? '4-3-3',
+  assignments:      data.assignments ?? {},
+  lineup:           data.lineup      ?? [],
+  bench:            data.bench       ?? [],
+  phase:            PHASE.PRE,
+  // Timer — wall-clock approach
+  timerStartedAt:   null,   // epoch ms of last unpause (null = paused/stopped)
+  timerAccumulated: 0,      // seconds banked from all previous timer runs
+  elapsedSeconds:   0,      // snapshot at match end; kept for calcMinutesPlayed compat
+  score:            { home: 0, away: 0 },
+  events:           [],
 })
 
-// Storage key bumped to v2 so legacy data doesn't corrupt the new shape.
 export const useMatchStore = create(
   persist(
-    (set, get) => ({
-      activeMatch: null,
-      matchHistory: [],    // finished matches (phase POST or force-archived)
+    (set) => ({
+      activeMatch:  null,
+      matchHistory: [],
 
-      // ─── Setup ───────────────────────────────────────────────────────────────
+      // ── Setup ──────────────────────────────────────────────────────────────
 
       startNewMatch: (data) => {
         const match = freshMatch(data)
         set(s => {
-          // Deduplicated archive: finishMatch() already wrote activeMatch into history,
-          // so we must filter by ID before prepending to avoid double entries.
           const history = s.activeMatch
             ? [s.activeMatch, ...s.matchHistory.filter(m => m.id !== s.activeMatch.id)]
             : s.matchHistory
@@ -45,11 +57,31 @@ export const useMatchStore = create(
       },
 
       updateSetup: (data) =>
+        set(s => ({ activeMatch: s.activeMatch ? { ...s.activeMatch, ...data } : null })),
+
+      // ── Timer actions (all wall-clock based) ──────────────────────────────
+
+      startTimer: () =>
         set(s => ({
-          activeMatch: s.activeMatch ? { ...s.activeMatch, ...data } : null,
+          activeMatch: s.activeMatch
+            ? { ...s.activeMatch, timerStartedAt: Date.now() }
+            : null,
         })),
 
-      // ─── Match lifecycle ──────────────────────────────────────────────────────
+      pauseTimer: () =>
+        set(s => {
+          if (!s.activeMatch?.timerStartedAt) return s
+          const additional = Math.floor((Date.now() - s.activeMatch.timerStartedAt) / 1000)
+          return {
+            activeMatch: {
+              ...s.activeMatch,
+              timerStartedAt:   null,
+              timerAccumulated: (s.activeMatch.timerAccumulated ?? 0) + additional,
+            },
+          }
+        }),
+
+      // ── Match lifecycle ────────────────────────────────────────────────────
 
       kickOff: () =>
         set(s => {
@@ -57,7 +89,9 @@ export const useMatchStore = create(
           return {
             activeMatch: {
               ...s.activeMatch,
-              phase: PHASE.LIVE,
+              phase:            PHASE.LIVE,
+              timerStartedAt:   Date.now(),
+              timerAccumulated: 0,
               events: [
                 ...s.activeMatch.events,
                 { id: generateId(), type: EVENT.MATCH_START, timestamp: Date.now(), elapsedSeconds: 0 },
@@ -69,12 +103,15 @@ export const useMatchStore = create(
       endHalf: () =>
         set(s => {
           if (!s.activeMatch) return s
+          const elapsed = getElapsedSeconds(s.activeMatch)
           return {
             activeMatch: {
               ...s.activeMatch,
+              timerStartedAt:   null,
+              timerAccumulated: elapsed,
               events: [
                 ...s.activeMatch.events,
-                { id: generateId(), type: EVENT.HALF_TIME, timestamp: Date.now(), elapsedSeconds: s.activeMatch.elapsedSeconds },
+                { id: generateId(), type: EVENT.HALF_TIME, timestamp: Date.now(), elapsedSeconds: elapsed },
               ],
             },
           }
@@ -83,53 +120,53 @@ export const useMatchStore = create(
       startSecondHalf: () =>
         set(s => {
           if (!s.activeMatch) return s
+          const elapsed = getElapsedSeconds(s.activeMatch)
           return {
             activeMatch: {
               ...s.activeMatch,
+              timerStartedAt: Date.now(),
               events: [
                 ...s.activeMatch.events,
-                { id: generateId(), type: EVENT.SECOND_HALF, timestamp: Date.now(), elapsedSeconds: s.activeMatch.elapsedSeconds },
+                { id: generateId(), type: EVENT.SECOND_HALF, timestamp: Date.now(), elapsedSeconds: elapsed },
               ],
             },
           }
         }),
 
-      // Pushes activeMatch into matchHistory (as POST) and keeps it visible for review.
-      // The caller navigates to /stats after this.
       finishMatch: () =>
         set(s => {
-          // Idempotent guard: already finished (e.g. StrictMode double-invoke)
           if (!s.activeMatch || s.activeMatch.phase === PHASE.POST) return s
+          const elapsed = getElapsedSeconds(s.activeMatch)
           const finished = {
             ...s.activeMatch,
-            phase: PHASE.POST,
+            phase:            PHASE.POST,
+            timerStartedAt:   null,
+            timerAccumulated: elapsed,
+            elapsedSeconds:   elapsed,  // snapshot for calcMinutesPlayed
             events: [
               ...s.activeMatch.events,
-              { id: generateId(), type: EVENT.MATCH_END, timestamp: Date.now(), elapsedSeconds: s.activeMatch.elapsedSeconds },
+              { id: generateId(), type: EVENT.MATCH_END, timestamp: Date.now(), elapsedSeconds: elapsed },
             ],
           }
           return {
-            activeMatch: finished,
+            activeMatch:  finished,
             matchHistory: [finished, ...s.matchHistory.filter(m => m.id !== finished.id)],
           }
         }),
 
-      // Hard-clear the active match (used by Settings "clear active" or "New Match" after review)
       clearActiveMatch: () => set({ activeMatch: null }),
 
-      // ─── Events ──────────────────────────────────────────────────────────────
+      // ── Events ────────────────────────────────────────────────────────────
 
       logEvent: (eventData) =>
         set(s => {
           if (!s.activeMatch) return s
-          const event = {
-            id: generateId(),
-            timestamp: Date.now(),
-            elapsedSeconds: s.activeMatch.elapsedSeconds,
-            ...eventData,
-          }
+          // Compute elapsed from wall clock at the moment of the event — accurate
+          // even if the display ticker was throttled in the background.
+          const elapsedSeconds = getElapsedSeconds(s.activeMatch)
+          const event = { id: generateId(), timestamp: Date.now(), elapsedSeconds, ...eventData }
           const events = [...s.activeMatch.events, event]
-          const score = computeScore(events)
+          const score  = computeScore(events)
           return { activeMatch: { ...s.activeMatch, events, score } }
         }),
 
@@ -137,20 +174,15 @@ export const useMatchStore = create(
         set(s => {
           if (!s.activeMatch) return s
           const events = s.activeMatch.events.filter(e => e.id !== eventId)
-          const score = computeScore(events)
+          const score  = computeScore(events)
           return { activeMatch: { ...s.activeMatch, events, score } }
         }),
 
-      setElapsed: (seconds) =>
-        set(s => ({
-          activeMatch: s.activeMatch ? { ...s.activeMatch, elapsedSeconds: seconds } : null,
-        })),
-
-      // ─── History management ───────────────────────────────────────────────────
+      // ── History ───────────────────────────────────────────────────────────
 
       deleteMatch: (id) =>
         set(s => ({
-          activeMatch: s.activeMatch?.id === id ? null : s.activeMatch,
+          activeMatch:  s.activeMatch?.id === id ? null : s.activeMatch,
           matchHistory: s.matchHistory.filter(m => m.id !== id),
         })),
 

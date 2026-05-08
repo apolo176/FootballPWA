@@ -4,7 +4,7 @@ import { cn } from '../../lib/utils'
 import { Badge } from '../ui/Badge'
 import { Modal } from '../ui/Modal'
 
-export function PlayerSelector({ open, onClose, onSelect, title = 'Select Player', lineup = [], playerIds }) {
+export function PlayerSelector({ open, onClose, onSelect, title = 'Seleccionar Jugador', lineup = [], playerIds }) {
   const { players } = useRosterStore()
   const [search, setSearch] = useState('')
 
@@ -39,41 +39,40 @@ export function PlayerSelector({ open, onClose, onSelect, title = 'Select Player
       <div className="space-y-3">
         <input
           type="text"
-          placeholder="Search by name or number…"
+          placeholder="Buscar por nombre o dorsal…"
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
           autoFocus
         />
 
         {lineup.length === 0 && !playerIds && (
-          <p className="text-xs text-amber-400/80 bg-amber-500/10 rounded-lg px-3 py-2">
-            No lineup set — showing all squad players
+          <p className="text-xs text-amber-600 dark:text-amber-400/80 bg-amber-50 dark:bg-amber-500/10 rounded-lg px-3 py-2">
+            Sin alineación — mostrando toda la plantilla
           </p>
         )}
 
         <div className="max-h-72 overflow-y-auto space-y-3 no-scrollbar">
           {grouped.length === 0 ? (
-            <p className="text-center text-slate-500 py-6 text-sm">No players found</p>
+            <p className="text-center text-slate-400 py-6 text-sm">No se encontraron jugadores</p>
           ) : (
             grouped.map(({ pos, players: grpPlayers }) => (
               <div key={pos}>
-                <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 px-1">{pos}</div>
+                <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5 px-1">{pos}</div>
                 <div className="space-y-1">
                   {grpPlayers.map(p => (
                     <button
                       key={p.id}
                       // Only call onSelect — the PARENT decides whether to close.
-                      // Do NOT call onClose() here; that would wipe pending/subOutPlayer
-                      // and break the two-step substitution flow.
                       onClick={() => onSelect(p)}
                       className={cn(
                         'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl',
-                        'bg-slate-800/60 hover:bg-slate-700/60 active:bg-slate-700',
-                        'text-white text-left transition-colors active:scale-[0.98]'
+                        'bg-slate-100 dark:bg-slate-800/60 hover:bg-slate-200 dark:hover:bg-slate-700/60',
+                        'active:bg-slate-300 dark:active:bg-slate-700',
+                        'text-slate-900 dark:text-white text-left transition-colors active:scale-[0.98]'
                       )}
                     >
-                      <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-700 text-sm font-bold font-mono shrink-0">
+                      <span className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-200 dark:bg-slate-700 text-sm font-bold font-mono shrink-0 text-slate-700 dark:text-white">
                         {p.number ?? '—'}
                       </span>
                       <span className="flex-1 font-medium truncate">{p.name}</span>

@@ -4,11 +4,11 @@ import { useMatchStore } from '../../store/matchStore'
 import { PHASE } from '../../lib/constants'
 
 const NAV = [
-  { to: '/',         label: 'Home',     Icon: HomeIcon    },
-  { to: '/training', label: 'Training', Icon: TrainingIcon },
-  { to: '/live',     label: 'Live',     Icon: LiveIcon,     center: true },
-  { to: '/stats',    label: 'Stats',    Icon: StatsIcon   },
-  { to: '/settings', label: 'Settings', Icon: SettingsIcon },
+  { to: '/',         label: 'Inicio',       Icon: HomeIcon    },
+  { to: '/training', label: 'Entrenamiento', Icon: TrainingIcon },
+  { to: '/live',     label: 'Directo',      Icon: LiveIcon,     center: true },
+  { to: '/stats',    label: 'Stats',        Icon: StatsIcon   },
+  { to: '/settings', label: 'Ajustes',      Icon: SettingsIcon },
 ]
 
 export function BottomNav() {
@@ -16,22 +16,22 @@ export function BottomNav() {
   const isLive = activeMatch?.phase === PHASE.LIVE
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-40 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 safe-bottom">
+    <nav className={cn(
+      'fixed bottom-0 inset-x-0 z-40',
+      'bg-white/95 dark:bg-slate-900/95 backdrop-blur-md',
+      'border-t border-slate-200 dark:border-slate-800',
+      'safe-bottom',
+    )}>
       <div className="flex items-end justify-around h-16 px-2 max-w-lg mx-auto">
         {NAV.map(({ to, label, Icon, center }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full focus-visible:outline-none"
-          >
+          <NavLink key={to} to={to} className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full focus-visible:outline-none">
             {({ isActive }) =>
               center ? (
-                /* Centre FAB — floats above the bar */
                 <div className={cn(
                   '-mt-5 w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg',
                   'transition-all duration-200 active:scale-90',
                   isLive
-                    ? 'bg-red-500 shadow-red-500/40 ring-2 ring-red-400/50 animate-pulse'
+                    ? 'bg-red-500 shadow-red-500/40 ring-2 ring-red-400/50'
                     : 'bg-emerald-500 shadow-emerald-500/40',
                   isActive && 'scale-105 shadow-xl',
                 )}>
@@ -39,8 +39,12 @@ export function BottomNav() {
                 </div>
               ) : (
                 <>
-                  <Icon className={cn('w-5 h-5 transition-colors', isActive ? 'text-emerald-400' : 'text-slate-500')} />
-                  <span className={cn('text-[10px] font-medium transition-colors', isActive ? 'text-emerald-400' : 'text-slate-500')}>
+                  <Icon className={cn('w-5 h-5 transition-colors',
+                    isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'
+                  )} />
+                  <span className={cn('text-[10px] font-medium transition-colors',
+                    isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'
+                  )}>
                     {label}
                   </span>
                 </>
@@ -53,8 +57,6 @@ export function BottomNav() {
   )
 }
 
-// ── Icons ─────────────────────────────────────────────────────────────────────
-
 function HomeIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -66,7 +68,7 @@ function HomeIcon({ className }) {
 function TrainingIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
     </svg>
   )
 }
@@ -83,7 +85,7 @@ function LiveIcon({ className }) {
 function StatsIcon({ className }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zm9.75-4.5c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM6.375 4.5c.621 0 1.125.504 1.125 1.125v.375h-2.25v-.375c0-.621.504-1.125 1.125-1.125h.001z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zm9.75-4.5c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625z" />
     </svg>
   )
 }

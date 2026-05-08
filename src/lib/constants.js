@@ -4,7 +4,9 @@ export const EVENT = {
   OWN_GOAL:     'own_goal',
   SHOT_ON:      'shot_on',
   SHOT_OFF:     'shot_off',
-  DANGER:       'danger',      // Ocasión de Peligro / Dangerous Attack
+  DANGER:       'danger',
+  SAVE:         'save',       // Parada (xG < 0.66)
+  BIG_SAVE:     'big_save',   // Gran Parada (xG > 0.66)
   YELLOW:       'yellow',
   RED:          'red',
   SUB:          'sub',
@@ -33,11 +35,21 @@ export const EVENT_META = {
   [EVENT.YELLOW]:       { label: 'Yellow Card',     emoji: '🟨', color: 'yellow',  affects: null },
   [EVENT.RED]:          { label: 'Red Card',        emoji: '🟥', color: 'red',     affects: null },
   [EVENT.SUB]:          { label: 'Substitution',    emoji: '🔄', color: 'violet',  affects: null },
+  [EVENT.SAVE]:         { label: 'Parada',           emoji: '🧤', color: 'sky',     affects: null },
+  [EVENT.BIG_SAVE]:     { label: 'Gran Parada',     emoji: '🦁', color: 'violet',  affects: null },
   [EVENT.MATCH_START]:  { label: 'Kick Off',        emoji: '▶️', color: 'emerald', affects: null },
   [EVENT.HALF_TIME]:    { label: 'Half Time',       emoji: '⏸️', color: 'slate',   affects: null },
   [EVENT.SECOND_HALF]:  { label: '2nd Half',        emoji: '▶️', color: 'emerald', affects: null },
   [EVENT.MATCH_END]:    { label: 'Full Time',       emoji: '🏁', color: 'slate',   affects: null },
 }
+
+export const GOAL_TYPES = [
+  { value: 'jugada',       label: 'Jugada',       emoji: '⚽', sub: 'Open Play'       },
+  { value: 'balon_parado', label: 'Balón Parado', emoji: '🎯', sub: 'Set Piece'        },
+  { value: 'contraataque', label: 'Contraataque', emoji: '⚡', sub: 'Counter Attack'   },
+  { value: 'penalti',      label: 'Penalti',      emoji: '🥅', sub: 'Penalty'          },
+  { value: 'error_rival',  label: 'Error Rival',  emoji: '❌', sub: 'Opponent Error'   },
+]
 
 // Formation positions in SVG coordinate space: x 0-100 (left→right), y 0-65 (top→GK)
 // CSS positioning: left=x%, top=(y/65*100)%

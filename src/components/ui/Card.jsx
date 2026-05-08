@@ -3,7 +3,12 @@ import { cn } from '../../lib/utils'
 export function Card({ className, children, ...props }) {
   return (
     <div
-      className={cn('bg-slate-800/60 border border-slate-700/50 rounded-2xl', className)}
+      className={cn(
+        'bg-white dark:bg-slate-800/60',
+        'border border-slate-200 dark:border-slate-700/50',
+        'rounded-2xl',
+        className
+      )}
       {...props}
     >
       {children}

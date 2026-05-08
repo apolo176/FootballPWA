@@ -15,47 +15,47 @@ function PlayerForm({ initial, onSave, onClose }) {
   return (
     <div className="space-y-4">
       <div>
-        <label className="text-xs text-slate-500 mb-1 block">Full Name *</label>
+        <label className="text-xs text-slate-500 mb-1 block">Nombre completo *</label>
         <input
           type="text"
-          placeholder="Player name"
+          placeholder="Nombre del jugador"
           value={form.name}
           onChange={e => set('name', e.target.value)}
-          className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
         />
       </div>
       <div className="flex gap-3">
         <div className="flex-1">
-          <label className="text-xs text-slate-500 mb-1 block">Squad Number</label>
+          <label className="text-xs text-slate-500 mb-1 block">Dorsal</label>
           <input
             type="number"
             min="1"
             max="99"
-            placeholder="e.g. 10"
+            placeholder="Ej. 10"
             value={form.number}
             onChange={e => set('number', e.target.value)}
-            className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
           />
         </div>
         <div className="flex-1">
-          <label className="text-xs text-slate-500 mb-1 block">Position</label>
+          <label className="text-xs text-slate-500 mb-1 block">Posición</label>
           <select
             value={form.position}
             onChange={e => set('position', e.target.value)}
-            className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none"
+            className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none"
           >
             {POSITIONS.map(p => <option key={p} value={p}>{p}</option>)}
           </select>
         </div>
       </div>
       <div className="flex gap-3 pt-2">
-        <Button variant="ghost" className="flex-1" onClick={onClose}>Cancel</Button>
+        <Button variant="ghost" className="flex-1" onClick={onClose}>Cancelar</Button>
         <Button
           className="flex-1"
           onClick={() => { onSave({ ...form, number: Number(form.number) || undefined }); onClose() }}
           disabled={!form.name.trim()}
         >
-          Save Player
+          Guardar
         </Button>
       </div>
     </div>
@@ -79,10 +79,10 @@ export default function Players({ embedded = false }) {
     <div className={wrapper}>
       <div className={`flex items-start justify-between ${embedded ? 'py-3' : 'px-4 pt-6 pb-4'}`}>
         <div>
-          <h1 className={`font-black text-white ${embedded ? 'text-lg' : 'text-2xl'}`}>Squad</h1>
-          <p className="text-sm text-slate-400 mt-0.5">{players.length} players registered</p>
+          <h1 className={`font-black text-slate-900 dark:text-white ${embedded ? 'text-lg' : 'text-2xl'}`}>Plantilla</h1>
+          <p className="text-sm text-slate-500 mt-0.5">{players.length} jugadores registrados</p>
         </div>
-        <Button size="sm" onClick={() => setAddOpen(true)}>+ Add</Button>
+        <Button size="sm" onClick={() => setAddOpen(true)}>+ Añadir</Button>
       </div>
 
       {/* Position filter pills */}
@@ -101,7 +101,7 @@ export default function Players({ embedded = false }) {
               onClick={() => setFilterPos(pos)}
               className={cn(
                 'shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold transition-all',
-                filterPos === pos ? activeColor : 'bg-slate-800 text-slate-400 hover:text-white'
+                filterPos === pos ? activeColor : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               )}
             >
               {pos}
@@ -116,29 +116,29 @@ export default function Players({ embedded = false }) {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Badge color={pos}>{pos}</Badge>
-                <span className="text-xs text-slate-500">{list.length} players</span>
+                <span className="text-xs text-slate-500">{list.length} jugadores</span>
               </div>
             </CardHeader>
             <CardBody className="pt-0">
-              <div className="divide-y divide-slate-700/30">
+              <div className="divide-y divide-slate-100 dark:divide-slate-700/30">
                 {list.map(player => (
                   <div key={player.id} className="flex items-center gap-3 py-3 group">
-                    <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-700/60 text-sm font-black font-mono text-white">
+                    <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-700/60 text-sm font-black font-mono text-slate-700 dark:text-white">
                       {player.number ?? '—'}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-white text-sm">{player.name}</div>
+                      <div className="font-semibold text-slate-900 dark:text-white text-sm">{player.name}</div>
                     </div>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => setEditTarget(player)}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-700/60 text-slate-400 hover:text-white transition-colors text-sm"
+                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-700/60 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors text-sm"
                       >
                         ✏️
                       </button>
                       <button
                         onClick={() => removePlayer(player.id)}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-700/60 text-slate-400 hover:text-red-400 transition-colors text-sm"
+                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-700/60 text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors text-sm"
                       >
                         🗑
                       </button>
@@ -151,18 +151,18 @@ export default function Players({ embedded = false }) {
         ))}
 
         {filtered.length === 0 && (
-          <div className="text-center py-16 text-slate-600">
+          <div className="text-center py-16 text-slate-400">
             <div className="text-5xl mb-4">👥</div>
-            <p className="text-sm">No players in this position</p>
+            <p className="text-sm">No hay jugadores en esta posición</p>
           </div>
         )}
       </div>
 
-      <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Add Player">
+      <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Añadir Jugador">
         <PlayerForm onSave={addPlayer} onClose={() => setAddOpen(false)} />
       </Modal>
 
-      <Modal open={!!editTarget} onClose={() => setEditTarget(null)} title="Edit Player">
+      <Modal open={!!editTarget} onClose={() => setEditTarget(null)} title="Editar Jugador">
         {editTarget && (
           <PlayerForm
             initial={editTarget}
