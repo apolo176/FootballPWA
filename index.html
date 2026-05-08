@@ -1,113 +1,20 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8" />
-<link rel="manifest" href="/manifest.json" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="default" />
-<meta name="apple-mobile-web-app-title" content="SeasonManager" />
-<link rel="apple-touch-icon" href="images.png" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Dashboard Temporada</title>
-<link rel="stylesheet" href="style.css" />
-<script src="sidebar.js"></script>
-</head>
-<body>
-
-<nav id="sidebar" aria-label="Menú principal">
-  <header>Menú</header>
-  <ul>
-    <li><a href="players/players.html" class="nav-link">Jugadores</a></li>
-    <li><a href="games/games.html" class="nav-link">Proximos partidos</a></li>
-    <li><a href="trainings/trainings.html" class="nav-link">Entrenamientos</a></li>
-    <li><a href="stats/advanced-stats.html" class="nav-link">Estadísticas Avanzadas</a></li>
-  </ul>
-
-  <div class="menu-footer">
-    <div class="dark-mode-toggle">
-      <input type="checkbox" id="darkModeToggle" />
-      <label for="darkModeToggle" aria-label="Modo oscuro">
-        <div class="toggle-icons">
-          <!-- Sol -->
-          <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" >
-            <path d="M6.76 4.84l-1.8-1.79-1.41 1.41 1.79 1.8 1.42-1.42zm10.48 0l1.79-1.79-1.41-1.41-1.8 1.79 1.42 1.41zM12 4V1h-2v3h2zm0 18v-3h-2v3h2zm8-10h3v-2h-3v2zm-18 0h3v-2H2v2zm15.24 7.16l1.8 1.79 1.41-1.41-1.79-1.8-1.42 1.42zm-10.48 0l-1.79 1.79 1.41 1.41 1.8-1.79-1.42-1.41zM16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
-          </svg>
-          <!-- Luna -->
-          <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" >
-            <path d="M21 12.79A9 9 0 0112.21 3 7 7 0 0012 17a7 7 0 009-4.21z"/>
-          </svg>
-        </div>
-      </label>
-    </div>
-
-    <div class="profile">
-      <img src="https://i.pravatar.cc/40" alt="Foto de usuario" />
-      <span>Apolo176</span>
-    </div>
-  </div>
-</nav>
-
-<button id="menu-btn" aria-label="Abrir/cerrar menú">&#9776;</button>
-
-  <main id="content" class="container-root">
-  <img src="images.png"/>
-  <h1>Bienvenido</h1>
-
-  <div class="cards-container">
-    <section class="card">
-      <h2>Próximo entrenamiento</h2>
-      <p>Martes 7 de Julio - 18:30</p>
-    </section>
-
-    <section class="card">
-      <h2>Partidos anteriores</h2>
-      <ul>
-        <li>1-0 vs Equipo A</li>
-        <li>2-2 vs Equipo B</li>
-      </ul>
-    </section>
-
-    <section class="card">
-      <h2>Jugadores más goleadores</h2>
-      <ol>
-        <li>Juan Pérez - 12 goles</li>
-        <li>Ana Gómez - 9 goles</li>
-        <li>Pedro Ruiz - 7 goles</li>
-      </ol>
-    </section>
-
-    <section class="card">
-      <h2>Jugadores con más minutos</h2>
-      <ol>
-        <li>Ana Gómez - 1200 minutos</li>
-        <li>Juan Pérez - 1100 minutos</li>
-        <li>Pedro Ruiz - 1050 minutos</li>
-      </ol>
-    </section>
-
-    <section class="card">
-      <h2>Tendencias</h2>
-      <p>Aquí podrían ir gráficos de tendencia (usar librerías JS)</p>
-    </section>
-  </div>
-</main>
-
-<script>
-      const menuBtn = document.getElementById('menu-btn');
-  const sidebar = document.getElementById('sidebar');
-  const mainContent = document.getElementById('mainContent');
-  const darkModeToggle = document.getElementById('darkModeToggle');
-
-  menuBtn.addEventListener('click', () => {
-    sidebar.classList.toggle('open');
-    mainContent.classList.toggle('shifted');
-  });
-
-  darkModeToggle.addEventListener('change', () => {
-    document.body.classList.toggle('dark', darkModeToggle.checked);
-  });
-
-</script>
-
-</body>
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/images.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+    <meta name="theme-color" content="#10b981" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="description" content="Real-time football match tracker for coaches" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <title>Football DSS</title>
+  </head>
+  <body class="bg-slate-950 text-slate-50 font-sans antialiased">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
