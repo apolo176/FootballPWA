@@ -5,8 +5,20 @@ import { Button } from '../components/ui/Button'
 import { Card, CardBody, CardHeader } from '../components/ui/Card'
 import { Modal } from '../components/ui/Modal'
 import { cn } from '../lib/utils'
+import { PLAYER_STATUS } from '../lib/constants'
 
 const POSITIONS = ['GK', 'DEF', 'MID', 'FWD']
+
+// ── Status pill styling ────────────────────────────────────────────────────
+
+const STATUS_PILL = {
+  available: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-500/30',
+  injured:   'bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300 border-red-300 dark:border-red-500/30',
+  suspended: 'bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-300 border-orange-300 dark:border-orange-500/30',
+  absent:    'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-500/30',
+}
+
+// ── Player form ────────────────────────────────────────────────────────────
 
 function PlayerForm({ initial, onSave, onClose }) {
   const [form, setForm] = useState(initial ?? { name: '', number: '', position: 'MID' })
@@ -62,13 +74,15 @@ function PlayerForm({ initial, onSave, onClose }) {
   )
 }
 
-// `embedded` = true when rendered inside Settings (no extra top padding/header)
+// ── `embedded` = true when rendered inside Settings (no extra top padding/header) ──
+
 export { Players }
 export default function Players({ embedded = false }) {
-  const { players, addPlayer, updatePlayer, removePlayer } = useRosterStore()
-  const [addOpen, setAddOpen] = useState(false)
-  const [editTarget, setEditTarget] = useState(null)
-  const [filterPos, setFilterPos] = useState('ALL')
+  const { players, addPlayer, updatePlayer, removePlayer, setPlayerStatus } = useRosterStore()
+  const [addOpen,          setAddOpen]          = useState(false)
+  const [editTarget,       setEditTarget]        = useState(null)
+  const [filterPos,        setFilterPos]         = useState('ALL')
+  const [statusPickerId,   setStatusPickerId]    = useState(null)  // which player has status picker open
 
   const filtered = filterPos === 'ALL' ? players : players.filter(p => p.position === filterPos)
   const grouped = POSITIONS.map(pos => ({ pos, list: filtered.filter(p => p.position === pos) })).filter(g => g.list.length > 0)
@@ -121,30 +135,73 @@ export default function Players({ embedded = false }) {
             </CardHeader>
             <CardBody className="pt-0">
               <div className="divide-y divide-slate-100 dark:divide-slate-700/30">
-                {list.map(player => (
-                  <div key={player.id} className="flex items-center gap-3 py-3 group">
-                    <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-700/60 text-sm font-black font-mono text-slate-700 dark:text-white">
-                      {player.number ?? '—'}
+                {list.map(player => {
+                  const pStatus = player.status ?? 'available'
+                  const statusMeta = PLAYER_STATUS[pStatus]
+                  const isPickerOpen = statusPickerId === player.id
+
+                  return (
+                    <div key={player.id}>
+                      <div className="flex items-center gap-3 py-3 group">
+                        {/* Number badge */}
+                        <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-700/60 text-sm font-black font-mono text-slate-700 dark:text-white shrink-0">
+                          {player.number ?? '—'}
+                        </div>
+
+                        {/* Name + status */}
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-slate-900 dark:text-white text-sm truncate">{player.name}</div>
+                          {/* Tappable status pill */}
+                          <button
+                            onClick={() => setStatusPickerId(isPickerOpen ? null : player.id)}
+                            className={cn(
+                              'mt-0.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-bold border transition-all active:scale-95',
+                              STATUS_PILL[pStatus]
+                            )}
+                          >
+                            {statusMeta.emoji} {statusMeta.label}
+                          </button>
+                        </div>
+
+                        {/* Edit / delete */}
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                          <button
+                            onClick={() => setEditTarget(player)}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-700/60 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors text-sm"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            onClick={() => removePlayer(player.id)}
+                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-700/60 text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors text-sm"
+                          >
+                            🗑
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Inline status picker */}
+                      {isPickerOpen && (
+                        <div className="flex flex-wrap gap-1.5 pb-3 pl-12">
+                          {Object.entries(PLAYER_STATUS).map(([key, meta]) => (
+                            <button
+                              key={key}
+                              onClick={() => { setPlayerStatus(player.id, key); setStatusPickerId(null) }}
+                              className={cn(
+                                'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95',
+                                pStatus === key
+                                  ? STATUS_PILL[key]
+                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                              )}
+                            >
+                              {meta.emoji} {meta.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-slate-900 dark:text-white text-sm">{player.name}</div>
-                    </div>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={() => setEditTarget(player)}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-700/60 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors text-sm"
-                      >
-                        ✏️
-                      </button>
-                      <button
-                        onClick={() => removePlayer(player.id)}
-                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-700/60 text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors text-sm"
-                      >
-                        🗑
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </CardBody>
           </Card>

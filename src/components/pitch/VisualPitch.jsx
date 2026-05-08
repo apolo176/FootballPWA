@@ -7,7 +7,7 @@ import {
 } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { PitchSVG } from './PitchSVG'
-import { FORMATIONS, FORMATION_NAMES } from '../../lib/constants'
+import { FORMATIONS, FORMATION_NAMES, PLAYER_STATUS } from '../../lib/constants'
 import { cn } from '../../lib/utils'
 import { useRosterStore } from '../../store/rosterStore'
 
@@ -15,11 +15,17 @@ const PITCH_H   = 65
 const MAX_BENCH = 6
 const POS_COLOR = { GK: 'bg-amber-500', DEF: 'bg-sky-500', MID: 'bg-emerald-500', FWD: 'bg-red-500' }
 
+function isUnavailable(player) {
+  const s = player?.status ?? 'available'
+  return s === 'injured' || s === 'suspended' || s === 'absent'
+}
+
 // ── Pitch slot (droppable) ────────────────────────────────────────────────
 
 function PositionSlot({ slot, player, onTap }) {
   const { setNodeRef, isOver } = useDroppable({ id: slot.id })
   const cssY = ((slot.y / PITCH_H) * 100).toFixed(1)
+  const unavail = isUnavailable(player)
 
   return (
     <div
@@ -33,9 +39,11 @@ function PositionSlot({ slot, player, onTap }) {
         'border-2 transition-all duration-150 shadow-md',
         isOver
           ? 'scale-125 bg-amber-400 border-amber-200 text-slate-900'
-          : player
-            ? 'bg-emerald-500 border-emerald-300 text-white scale-105'
-            : 'bg-slate-900/80 border-white/40 text-white/60',
+          : player && unavail
+            ? 'bg-red-500 border-red-300 text-white scale-105'
+            : player
+              ? 'bg-emerald-500 border-emerald-300 text-white scale-105'
+              : 'bg-slate-900/80 border-white/40 text-white/60',
       )}>
         {player
           ? (player.number ?? '?')
@@ -43,15 +51,18 @@ function PositionSlot({ slot, player, onTap }) {
         }
       </div>
       {player && (
-        <div className="mt-0.5 px-1 bg-slate-900/80 rounded text-[8px] font-semibold text-white leading-tight max-w-[3rem] text-center truncate">
-          {player.name.split(' ')[0]}
+        <div className={cn(
+          'mt-0.5 px-1 rounded text-[8px] font-semibold text-white leading-tight max-w-[3rem] text-center truncate',
+          unavail ? 'bg-red-600/90' : 'bg-slate-900/80'
+        )}>
+          {unavail ? (PLAYER_STATUS[player.status]?.emoji ?? '⚠️') : player.name.split(' ')[0]}
         </div>
       )}
     </div>
   )
 }
 
-// ── Draggable chip (used in both bench + descartados lists) ───────────────
+// ── Draggable chip (used in bench + descartados lists) ────────────────────
 
 function DraggableChip({ player, suffix, onAction, actionLabel, actionColor = 'text-emerald-500 dark:text-emerald-400', disabled = false }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -59,26 +70,35 @@ function DraggableChip({ player, suffix, onAction, actionLabel, actionColor = 't
     data: { player },
   })
   const posColor = POS_COLOR[player.position] ?? 'bg-slate-500'
+  const unavail  = isUnavailable(player)
+  const statusMeta = unavail ? PLAYER_STATUS[player.status ?? 'available'] : null
 
   return (
     <div
       ref={setNodeRef}
       {...attributes}
       className={cn(
-        'flex items-center gap-2 px-2.5 py-2 rounded-xl',
-        'border border-slate-200 dark:border-slate-700/40',
-        'bg-slate-100 dark:bg-slate-800/60 select-none touch-none',
+        'flex items-center gap-2 px-2.5 py-2 rounded-xl select-none touch-none',
+        'border transition-all',
+        unavail
+          ? 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30'
+          : 'bg-slate-100 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/40',
         isDragging ? 'opacity-30' : '',
       )}
       style={{ transform: CSS.Transform.toString(transform) }}
     >
       <div {...listeners} className="flex items-center gap-2 flex-1 min-w-0 cursor-grab active:cursor-grabbing">
-        <div className={cn('w-1 h-7 rounded-full shrink-0', posColor)} />
-        <span className="w-6 text-center font-black font-mono text-xs text-slate-500 dark:text-slate-300 shrink-0">
+        <div className={cn('w-1 h-7 rounded-full shrink-0', unavail ? 'bg-red-400' : posColor)} />
+        <span className={cn('w-6 text-center font-black font-mono text-xs shrink-0', unavail ? 'text-red-500 dark:text-red-400' : 'text-slate-500 dark:text-slate-300')}>
           {player.number ?? '?'}
         </span>
-        <span className="text-xs font-medium text-slate-900 dark:text-white truncate">{player.name}</span>
+        <span className={cn('text-xs font-medium truncate', unavail ? 'text-red-700 dark:text-red-300' : 'text-slate-900 dark:text-white')}>
+          {player.name}
+        </span>
       </div>
+      {statusMeta && (
+        <span className="text-sm shrink-0" title={statusMeta.label}>{statusMeta.emoji}</span>
+      )}
       {onAction && (
         <button
           onClick={(e) => { e.stopPropagation(); onAction() }}
@@ -101,10 +121,15 @@ function DraggableChip({ player, suffix, onAction, actionLabel, actionColor = 't
 
 function FloatingChip({ player }) {
   if (!player) return null
+  const unavail = isUnavailable(player)
   return (
-    <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-500 shadow-xl shadow-emerald-500/40 text-white text-sm font-bold">
+    <div className={cn(
+      'flex items-center gap-2 px-3 py-2 rounded-xl shadow-xl text-white text-sm font-bold',
+      unavail ? 'bg-red-500 shadow-red-500/40' : 'bg-emerald-500 shadow-emerald-500/40'
+    )}>
       <span className="font-mono font-black">{player.number ?? '?'}</span>
       {player.name}
+      {unavail && <span className="text-sm">{PLAYER_STATUS[player.status]?.emoji}</span>}
     </div>
   )
 }
@@ -129,17 +154,6 @@ function SectionHeader({ title, count, max }) {
 
 // ── Main component ────────────────────────────────────────────────────────
 
-/**
- * Visual pitch with drag-and-drop lineup.
- *
- * Props:
- *   formation             string  — active formation key
- *   assignments           object  — { slotId: playerId }
- *   bench                 array   — playerIds on bench (max 6)
- *   onAssignmentsChange   fn
- *   onBenchChange         fn
- *   onFormationChange     fn
- */
 export function VisualPitch({
   formation,
   assignments,
@@ -149,8 +163,9 @@ export function VisualPitch({
   onFormationChange,
 }) {
   const { players } = useRosterStore()
-  const [dragPlayerId, setDragPlayerId] = useState(null)
-  const [selectorSlot, setSelectorSlot] = useState(null)
+  const [dragPlayerId,  setDragPlayerId]  = useState(null)
+  const [selectorSlot,  setSelectorSlot]  = useState(null)
+  const [unavailBanner, setUnavailBanner] = useState(null)  // warning text after bad drag
 
   const slots = FORMATIONS[formation] ?? FORMATIONS['4-3-3']
 
@@ -161,14 +176,11 @@ export function VisualPitch({
 
   const getPlayer = useCallback((id) => players.find(p => p.id === id), [players])
 
-  // Derived sets
   const assignedIds  = new Set(Object.values(assignments).filter(Boolean))
   const benchSet     = new Set(bench)
   const startingList = slots.map(s => assignments[s.id]).filter(Boolean)
   const benchList    = players.filter(p => benchSet.has(p.id))
   const descartados  = players.filter(p => !assignedIds.has(p.id) && !benchSet.has(p.id))
-
-  // ── Bench actions ──────────────────────────────────────────────────────
 
   const addToBench = useCallback((playerId) => {
     if (bench.length >= MAX_BENCH) return
@@ -179,13 +191,13 @@ export function VisualPitch({
     onBenchChange(bench.filter(id => id !== playerId))
   }, [bench, onBenchChange])
 
-  // ── Drag handlers ──────────────────────────────────────────────────────
-
   const handleDragStart = ({ active }) => setDragPlayerId(active.id)
 
-  const handleDragEnd = useCallback(({ active, over }) => {
+  const handleDragEndSafe = useCallback((args) => {
+    const { active, over } = args
     setDragPlayerId(null)
     const playerId = active.id
+    const player   = getPlayer(playerId)
 
     const next = { ...assignments }
     for (const sid of Object.keys(next)) {
@@ -195,12 +207,16 @@ export function VisualPitch({
     if (over && !over.id.startsWith('__')) {
       next[over.id] = playerId
       if (benchSet.has(playerId)) onBenchChange(bench.filter(id => id !== playerId))
+
+      if (player && isUnavailable(player)) {
+        const meta = PLAYER_STATUS[player.status]
+        setUnavailBanner(`${meta.emoji} ${player.name} está ${meta.label.toLowerCase()}`)
+        setTimeout(() => setUnavailBanner(null), 3500)
+      }
     }
 
     onAssignmentsChange(next)
-  }, [assignments, bench, benchSet, onAssignmentsChange, onBenchChange])
-
-  // ── Tap-on-slot quick picker ───────────────────────────────────────────
+  }, [assignments, bench, benchSet, getPlayer, onAssignmentsChange, onBenchChange])
 
   const handleSlotTap = (slot) => setSelectorSlot(slot)
 
@@ -212,8 +228,17 @@ export function VisualPitch({
     if (playerId && benchSet.has(playerId)) {
       onBenchChange(bench.filter(id => id !== playerId))
     }
-    if (playerId) next[selectorSlot.id] = playerId
-    else delete next[selectorSlot.id]
+    if (playerId) {
+      next[selectorSlot.id] = playerId
+      const player = getPlayer(playerId)
+      if (player && isUnavailable(player)) {
+        const meta = PLAYER_STATUS[player.status]
+        setUnavailBanner(`${meta.emoji} ${player.name} está ${meta.label.toLowerCase()}`)
+        setTimeout(() => setUnavailBanner(null), 3500)
+      }
+    } else {
+      delete next[selectorSlot.id]
+    }
     onAssignmentsChange(next)
     setSelectorSlot(null)
   }
@@ -224,7 +249,7 @@ export function VisualPitch({
   }
 
   return (
-    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEndSafe}>
 
       {/* ── Formation pills ──────────────────────────────────────────────── */}
       <div className="flex gap-2 mb-3 flex-wrap">
@@ -241,6 +266,14 @@ export function VisualPitch({
           </button>
         ))}
       </div>
+
+      {/* ── Unavailability warning banner ────────────────────────────────── */}
+      {unavailBanner && (
+        <div className="mb-2 flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-300 dark:border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs font-semibold">
+          <span className="flex-1">{unavailBanner} — confirma si quieres incluirlo de todas formas</span>
+          <button onClick={() => setUnavailBanner(null)} className="text-amber-500 shrink-0">✕</button>
+        </div>
+      )}
 
       {/* ── Pitch ────────────────────────────────────────────────────────── */}
       <div
@@ -286,7 +319,7 @@ export function VisualPitch({
         </div>
       </div>
 
-      {/* ── Descartados / Not Called Up ───────────────────────────────────── */}
+      {/* ── Descartados ───────────────────────────────────────────────────── */}
       <div className="mt-4">
         <SectionHeader title="Descartados" count={descartados.length} />
         {descartados.length === 0 ? (
@@ -332,7 +365,6 @@ export function VisualPitch({
             </div>
 
             <div className="max-h-72 overflow-y-auto no-scrollbar space-y-1">
-              {/* Remove option */}
               {assignments[selectorSlot.id] && (
                 <button
                   onClick={() => handleQuickPick(null)}
@@ -346,14 +378,7 @@ export function VisualPitch({
                 <>
                   <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pt-2 pb-1">Banquillo</div>
                   {benchList.map(p => (
-                    <PlayerPickerRow
-                      key={p.id}
-                      player={p}
-                      isCurrent={assignments[selectorSlot.id] === p.id}
-                      badge="Banquillo"
-                      badgeColor="text-amber-600 dark:text-amber-400"
-                      onClick={() => handleQuickPick(p.id)}
-                    />
+                    <PlayerPickerRow key={p.id} player={p} isCurrent={assignments[selectorSlot.id] === p.id} badge="Banquillo" badgeColor="text-amber-600 dark:text-amber-400" onClick={() => handleQuickPick(p.id)} />
                   ))}
                 </>
               )}
@@ -362,14 +387,7 @@ export function VisualPitch({
                 <>
                   <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pt-2 pb-1">Descartados</div>
                   {descartados.map(p => (
-                    <PlayerPickerRow
-                      key={p.id}
-                      player={p}
-                      isCurrent={assignments[selectorSlot.id] === p.id}
-                      badge="—"
-                      badgeColor="text-slate-400"
-                      onClick={() => handleQuickPick(p.id)}
-                    />
+                    <PlayerPickerRow key={p.id} player={p} isCurrent={assignments[selectorSlot.id] === p.id} badge="—" badgeColor="text-slate-400" onClick={() => handleQuickPick(p.id)} />
                   ))}
                 </>
               )}
@@ -382,16 +400,7 @@ export function VisualPitch({
                     .map(pid => {
                       const p = getPlayer(pid)
                       if (!p) return null
-                      return (
-                        <PlayerPickerRow
-                          key={pid}
-                          player={p}
-                          isCurrent={false}
-                          badge="Titular"
-                          badgeColor="text-emerald-600 dark:text-emerald-400"
-                          onClick={() => handleQuickPick(pid)}
-                        />
-                      )
+                      return <PlayerPickerRow key={pid} player={p} isCurrent={false} badge="Titular" badgeColor="text-emerald-600 dark:text-emerald-400" onClick={() => handleQuickPick(pid)} />
                     })
                   }
                 </>
@@ -406,6 +415,7 @@ export function VisualPitch({
 
 function PlayerPickerRow({ player, isCurrent, badge, badgeColor, onClick }) {
   const posColor = POS_COLOR[player.position] ?? 'bg-slate-500'
+  const unavail  = isUnavailable(player)
   return (
     <button
       onClick={onClick}
@@ -413,12 +423,15 @@ function PlayerPickerRow({ player, isCurrent, badge, badgeColor, onClick }) {
         'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors',
         isCurrent
           ? 'bg-emerald-50 dark:bg-emerald-500/20 border border-emerald-300 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-300'
-          : 'bg-slate-100 dark:bg-slate-800/60 hover:bg-slate-200 dark:hover:bg-slate-700/60 text-slate-900 dark:text-white',
+          : unavail
+            ? 'bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-300'
+            : 'bg-slate-100 dark:bg-slate-800/60 hover:bg-slate-200 dark:hover:bg-slate-700/60 text-slate-900 dark:text-white',
       )}
     >
-      <div className={cn('w-1 h-6 rounded-full shrink-0', posColor)} />
+      <div className={cn('w-1 h-6 rounded-full shrink-0', unavail ? 'bg-red-400' : posColor)} />
       <span className="w-7 text-center font-black font-mono text-xs text-slate-500 dark:text-slate-300 shrink-0">{player.number ?? '?'}</span>
       <span className="flex-1 text-left font-medium truncate">{player.name}</span>
+      {unavail && <span className="text-sm shrink-0">{PLAYER_STATUS[player.status]?.emoji}</span>}
       <span className={cn('text-xs font-semibold shrink-0', badgeColor)}>{badge}</span>
     </button>
   )

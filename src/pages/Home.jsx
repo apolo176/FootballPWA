@@ -9,7 +9,7 @@ import { Button } from '../components/ui/Button'
 import { Badge } from '../components/ui/Badge'
 import { EventLog } from '../components/match/EventLog'
 import { formatDate, getMatchResult, getResultColor, cn } from '../lib/utils'
-import { PHASE } from '../lib/constants'
+import { PHASE, PLAYER_STATUS } from '../lib/constants'
 
 // ── Competition card (multi-competition mode) ─────────────────────────────
 
@@ -59,6 +59,15 @@ export default function Home() {
   const finishedMatches = matchHistory.filter(m => m.phase === PHASE.POST)
   const wins   = finishedMatches.filter(m => getMatchResult(m.score ?? { home: 0, away: 0 }) === 'W').length
   const played = finishedMatches.length
+
+  // Squad health
+  const healthCounts = players.reduce((acc, p) => {
+    const s = p.status ?? 'available'
+    acc[s] = (acc[s] ?? 0) + 1
+    return acc
+  }, {})
+  const unavailableCount = (healthCounts.injured ?? 0) + (healthCounts.suspended ?? 0) + (healthCounts.absent ?? 0)
+  const availableCount   = healthCounts.available ?? players.length
 
   // Group by competition
   const compMap = new Map()
@@ -173,6 +182,66 @@ export default function Home() {
             <div className="text-xs text-slate-500 mt-0.5">Partidos</div>
           </Card>
         </div>
+
+        {/* Squad Health */}
+        {players.length > 0 && (
+          <Card>
+            <CardBody>
+              <div className="flex items-center justify-between mb-2.5">
+                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Estado del Equipo</h3>
+                {unavailableCount > 0 && (
+                  <span className="text-xs font-bold text-red-600 dark:text-red-400">{unavailableCount} no disponible{unavailableCount > 1 ? 's' : ''}</span>
+                )}
+              </div>
+
+              {/* Health bar */}
+              <div className="h-2.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden flex mb-2.5">
+                {availableCount > 0 && (
+                  <div className="bg-emerald-500 h-full transition-all duration-500" style={{ width: `${(availableCount / players.length) * 100}%` }} />
+                )}
+                {(healthCounts.injured ?? 0) > 0 && (
+                  <div className="bg-red-400 h-full" style={{ width: `${((healthCounts.injured ?? 0) / players.length) * 100}%` }} />
+                )}
+                {(healthCounts.suspended ?? 0) > 0 && (
+                  <div className="bg-orange-400 h-full" style={{ width: `${((healthCounts.suspended ?? 0) / players.length) * 100}%` }} />
+                )}
+                {(healthCounts.absent ?? 0) > 0 && (
+                  <div className="bg-amber-400 h-full" style={{ width: `${((healthCounts.absent ?? 0) / players.length) * 100}%` }} />
+                )}
+              </div>
+
+              {/* Status breakdown */}
+              <div className="flex flex-wrap gap-x-4 gap-y-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{availableCount}</span>
+                  <span className="text-xs text-slate-500">disponibles</span>
+                </div>
+                {(healthCounts.injured ?? 0) > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs">🤕</span>
+                    <span className="text-xs font-semibold text-red-600 dark:text-red-400">{healthCounts.injured}</span>
+                    <span className="text-xs text-slate-500">lesionado{healthCounts.injured > 1 ? 's' : ''}</span>
+                  </div>
+                )}
+                {(healthCounts.suspended ?? 0) > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs">🟥</span>
+                    <span className="text-xs font-semibold text-orange-600 dark:text-orange-400">{healthCounts.suspended}</span>
+                    <span className="text-xs text-slate-500">sancionado{healthCounts.suspended > 1 ? 's' : ''}</span>
+                  </div>
+                )}
+                {(healthCounts.absent ?? 0) > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs">⚠️</span>
+                    <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">{healthCounts.absent}</span>
+                    <span className="text-xs text-slate-500">ausente{healthCounts.absent > 1 ? 's' : ''}</span>
+                  </div>
+                )}
+              </div>
+            </CardBody>
+          </Card>
+        )}
 
         {/* ── Multi-competition mode ──────────────────────────────────────── */}
         {multiComp && !selectedComp && (

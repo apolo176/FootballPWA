@@ -110,6 +110,19 @@ export const FORMATIONS = {
 
 export const FORMATION_NAMES = Object.keys(FORMATIONS)
 
+export const PLAYER_STATUS = {
+  available:  { label: 'Disponible',  emoji: '✅', short: 'OK'  },
+  injured:    { label: 'Lesionado',   emoji: '🤕', short: 'LES' },
+  suspended:  { label: 'Sancionado',  emoji: '🟥', short: 'SAN' },
+  absent:     { label: 'Ausente',     emoji: '⚠️', short: 'AUS' },
+}
+
+export const ATTENDANCE_STATUS = {
+  attended: { label: 'Asistió',   emoji: '✓', color: 'emerald' },
+  excused:  { label: 'Justificó', emoji: '~', color: 'amber'   },
+  absent:   { label: 'Faltó',     emoji: '✗', color: 'red'     },
+}
+
 export const YELLOW_REASONS = [
   'Falta Táctica',
   'Protestar',

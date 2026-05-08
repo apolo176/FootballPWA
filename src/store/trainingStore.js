@@ -6,6 +6,9 @@ export const useTrainingStore = create(
   persist(
     (set) => ({
       drills: [],
+      trainingHistory: [],   // Array<{ id, date, attendance: { [playerId]: 'attended'|'excused'|'absent' } }>
+
+      // ── Drills ──────────────────────────────────────────────────────────
 
       addDrill: (data) => {
         const drill = {
@@ -24,6 +27,31 @@ export const useTrainingStore = create(
 
       deleteDrill: (id) =>
         set(s => ({ drills: s.drills.filter(d => d.id !== id) })),
+
+      // ── Training sessions ────────────────────────────────────────────────
+
+      addSession: (date) => {
+        const session = { id: generateId(), date, attendance: {} }
+        set(s => ({ trainingHistory: [session, ...s.trainingHistory] }))
+        return session
+      },
+
+      setAttendance: (sessionId, playerId, status) =>
+        set(s => ({
+          trainingHistory: s.trainingHistory.map(session => {
+            if (session.id !== sessionId) return session
+            const attendance = { ...session.attendance }
+            if (status == null) {
+              delete attendance[playerId]
+            } else {
+              attendance[playerId] = status
+            }
+            return { ...session, attendance }
+          }),
+        })),
+
+      deleteSession: (id) =>
+        set(s => ({ trainingHistory: s.trainingHistory.filter(s => s.id !== id) })),
     }),
     { name: 'football-dss-training' }
   )
