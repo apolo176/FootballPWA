@@ -3,24 +3,19 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches:
-      - main # O 'master' si tu rama principal se llama así
+      - main
 
-# Otorga los permisos necesarios a GitHub Actions
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Permite que solo haya un despliegue a la vez
 concurrency:
   group: "pages"
   cancel-in-progress: true
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -38,15 +33,27 @@ jobs:
       - name: Build
         run: npm run build
 
+      # GitHub Pages returns a real 404 for paths it doesn't recognise.
+      # Copying index.html to 404.html lets the SPA shell load for every
+      # URL so React Router can handle client-side navigation correctly.
+      - name: Create SPA 404 fallback
+        run: cp dist/index.html dist/404.html
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Vite compila por defecto en la carpeta 'dist'
           path: './dist'
 
+  deploy:
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
