@@ -24,6 +24,10 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    /* Push all content below the iPhone notch / Dynamic Island / status bar.
+       box-sizing: border-box (set globally by Tailwind preflight) keeps the
+       total height at exactly 100dvh so nothing overflows. */
+    padding-top: env(safe-area-inset-top);
   }
 
   /* Custom scrollbar */
@@ -74,6 +78,10 @@
 }
 
 @layer utilities {
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
   .safe-bottom {
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }

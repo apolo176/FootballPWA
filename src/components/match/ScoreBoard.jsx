@@ -12,7 +12,7 @@ export function ScoreBoard({ elapsed, match, onPauseResume, isTimerRunning, onEn
   const hasSecondHalf = match.events.some(e => e.type === 'second_half')
 
   return (
-    <div className="bg-gradient-to-b from-slate-800 to-slate-900 border-b border-slate-700/50">
+    <div className="bg-gradient-to-b from-slate-950 to-slate-900 border-b border-slate-700/50">
       {/* Teams row */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2 gap-3">
         {/* Home team */}
