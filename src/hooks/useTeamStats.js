@@ -14,8 +14,9 @@ export function useTeamStats(match) {
     if (!match) return null
 
     const events = match.events ?? []
+    // Recompute from events so OWN_GOAL fix applies even for persisted matches
     const score  = computeScore(events)
-    const stats  = computeStats(events, players)
+    const stats  = computeStats(events)
 
     // ── Timeline ────────────────────────────────────────────────────────────
     const timeline = [...events]
@@ -34,10 +35,7 @@ export function useTeamStats(match) {
       })
 
     // ── Per-player stats ─────────────────────────────────────────────────────
-    // Base pool: EVERYONE who actually stepped onto the pitch this match.
-    //   • Starting XI  → in match.lineup
-    //   • Substituted on → appear as subPlayerId in a SUB event
-    // Bench players who never came on are intentionally excluded.
+    // Pool = everyone who stepped onto the pitch this match
     const startingIds = new Set(match.lineup ?? [])
     const subOnIds    = new Set(
       events
@@ -51,13 +49,16 @@ export function useTeamStats(match) {
         const ps     = stats.playerStats[pid] ?? {}
         const player = players.find(p => p.id === pid)
         return {
-          goals:        ps.goals   ?? 0,
-          assists:      ps.assists  ?? 0,
-          shotsOn:      ps.shotsOn  ?? 0,
-          shotsOff:     ps.shotsOff ?? 0,
-          yellow:       ps.yellow   ?? 0,
-          red:          ps.red      ?? 0,
-          danger:       ps.danger   ?? 0,
+          goals:        ps.goals     ?? 0,
+          ownGoals:     ps.ownGoals  ?? 0,
+          assists:      ps.assists   ?? 0,
+          shotsOn:      ps.shotsOn   ?? 0,
+          shotsOff:     ps.shotsOff  ?? 0,
+          yellow:       ps.yellow    ?? 0,
+          red:          ps.red       ?? 0,
+          danger:       ps.danger    ?? 0,
+          saves:        ps.saves     ?? 0,
+          bigSaves:     ps.bigSaves  ?? 0,
           playerId:     pid,
           name:         player?.name     ?? 'Unknown',
           number:       player?.number,
@@ -66,13 +67,11 @@ export function useTeamStats(match) {
           started:      startingIds.has(pid),
         }
       })
-      // Sort: most minutes first → then by position
       .sort((a, b) =>
         b.minutesPlayed - a.minutesPlayed ||
         (POS_ORDER[a.position] ?? 9) - (POS_ORDER[b.position] ?? 9)
       )
 
-    // ── Team-level aggregates ────────────────────────────────────────────────
     const danger  = events.filter(e => e.type === EVENT.DANGER).length
     const yellows = events.filter(e => e.type === EVENT.YELLOW).length
     const reds    = events.filter(e => e.type === EVENT.RED).length

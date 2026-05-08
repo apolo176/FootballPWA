@@ -1,18 +1,19 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { useMatchStore, getElapsedSeconds } from '../store/matchStore'
-import { PHASE } from '../lib/constants'
+import { EVENT, PHASE } from '../lib/constants'
 
 /**
- * Manages the match timer display and exposes all in-game actions.
+ * Single source of truth for in-game state.
  *
- * Timer design — immune to background tab throttling / phone sleep:
- *   - Zustand stores timerStartedAt (epoch ms) and timerAccumulated (seconds).
- *   - setInterval here is a DISPLAY TICKER only — it triggers re-renders so
- *     the scoreboard clock updates every second. It never writes to the store.
- *   - Elapsed time is always computed from Date.now() − timerStartedAt,
- *     so a 30-second background delay shows the correct 30-second jump.
+ * Timer:  wall-clock immune to background throttling (Date.now() − timerStartedAt).
+ *         setInterval is a DISPLAY TICKER only — never writes to the store.
  *
- * Portable to React Native (replace setInterval with BackgroundTimer).
+ * activePlayers: IDs currently on the pitch, kept in sync with substitution
+ *               and red-card events.  This is the authoritative list for all
+ *               event-attribution flows (goal scorer, card recipient, save).
+ *
+ * availableBench: setup-bench players who have NOT yet come on — the pool
+ *               from which substitutes are drawn.
  */
 export function useMatchEngine() {
   const {
@@ -28,9 +29,8 @@ export function useMatchEngine() {
   } = useMatchStore()
 
   // ── Display ticker ────────────────────────────────────────────────────────
-  // Forces a re-render every second so the clock stays in sync with Date.now().
   const [, setTick] = useState(0)
-  const tickRef = useRef(null)
+  const tickRef     = useRef(null)
 
   const isTimerRunning = !!activeMatch?.timerStartedAt
   const isLive         = activeMatch?.phase === PHASE.LIVE
@@ -45,14 +45,42 @@ export function useMatchEngine() {
     return () => clearInterval(tickRef.current)
   }, [isTimerRunning])
 
-  // Always computed fresh — never stale from a throttled interval
   const elapsed = getElapsedSeconds(activeMatch)
   const minute  = Math.floor(elapsed / 60)
+
+  // ── Active players on the pitch ──────────────────────────────────────────
+  // Walk every SUB and RED event in order, mirroring what happened on the
+  // pitch.  This replaces the old per-component currentOnPitch useMemo.
+  const activePlayers = useMemo(() => {
+    if (!activeMatch?.lineup) return []
+    const onPitch = [...activeMatch.lineup]
+    for (const e of activeMatch.events ?? []) {
+      if (e.type === EVENT.SUB && e.playerId && e.subPlayerId) {
+        const idx = onPitch.indexOf(e.playerId)
+        if (idx !== -1) {
+          onPitch.splice(idx, 1, e.subPlayerId)        // swap out → in
+        } else if (!onPitch.includes(e.subPlayerId)) {
+          onPitch.push(e.subPlayerId)                  // safety: add if missing
+        }
+      }
+      if (e.type === EVENT.RED && e.playerId) {
+        const idx = onPitch.indexOf(e.playerId)
+        if (idx !== -1) onPitch.splice(idx, 1)        // remove from pitch
+      }
+    }
+    return onPitch
+  }, [activeMatch?.lineup, activeMatch?.events])
+
+  // Bench players who have NOT yet come on (available for substitution)
+  const availableBench = useMemo(() => {
+    const pitchSet = new Set(activePlayers)
+    return (activeMatch?.bench ?? []).filter(id => !pitchSet.has(id))
+  }, [activePlayers, activeMatch?.bench])
 
   // ── Public actions ────────────────────────────────────────────────────────
 
   const kickOff = useCallback(() => {
-    storeKickOff()   // sets phase=LIVE, timerStartedAt=Date.now()
+    storeKickOff()
     if (navigator.vibrate) navigator.vibrate([50, 30, 50])
   }, [storeKickOff])
 
@@ -67,15 +95,15 @@ export function useMatchEngine() {
   }, [logEvent])
 
   const handleEndHalf = useCallback(() => {
-    storeEndHalf()    // pauses timer + adds half_time event with wall-clock elapsed
+    storeEndHalf()
   }, [storeEndHalf])
 
   const handleSecondHalf = useCallback(() => {
-    storeStartSecondHalf()   // resumes timer + adds second_half event
+    storeStartSecondHalf()
   }, [storeStartSecondHalf])
 
   const handleFinish = useCallback(() => {
-    storeFinishMatch()   // pauses timer + snapshots elapsed + adds match_end event
+    storeFinishMatch()
   }, [storeFinishMatch])
 
   return {
@@ -84,6 +112,8 @@ export function useMatchEngine() {
     minute,
     isLive,
     isTimerRunning,
+    activePlayers,    // ← canonical on-pitch list
+    availableBench,   // ← not-yet-used bench players
     kickOff,
     pauseResume,
     recordEvent,

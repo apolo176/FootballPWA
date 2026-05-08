@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMatchEngine } from '../hooks/useMatchEngine'
 import { useMatchStore } from '../store/matchStore'
@@ -20,48 +20,29 @@ const PRIMARY_ACTIONS = [
 ]
 
 const SECONDARY_ACTIONS = [
-  { type: EVENT.SHOT_ON,  emoji: '🎯', label: 'On Target',  color: 'sky',    flow: 'player'  },
-  { type: EVENT.SHOT_OFF, emoji: '↗️', label: 'Off Target', color: 'slate',  flow: 'player'  },
-  { type: EVENT.DANGER,   emoji: '⚡', label: 'Peligro',    color: 'amber',  flow: 'player'  },
-  { type: EVENT.SAVE,     emoji: '🧤', label: 'Parada',     color: 'sky',    flow: 'gksave'  },
-  { type: EVENT.BIG_SAVE, emoji: '🦁', label: 'Gran Parada',color: 'violet', flow: 'gksave'  },
-  { type: EVENT.YELLOW,   emoji: '🟨', label: 'Amarilla',   color: 'yellow', flow: 'card'    },
-  { type: EVENT.RED,      emoji: '🟥', label: 'Roja',       color: 'red',    flow: 'card'    },
-  { type: EVENT.SUB,      emoji: '🔄', label: 'Cambio',     color: 'violet', flow: 'sub'     },
-  { type: EVENT.OWN_GOAL, emoji: '🙈', label: 'P. Propia',  color: 'amber',  flow: 'player'  },
+  { type: EVENT.SHOT_ON,  emoji: '🎯', label: 'On Target',   color: 'sky',    flow: 'player'  },
+  { type: EVENT.SHOT_OFF, emoji: '↗️', label: 'Off Target',  color: 'slate',  flow: 'player'  },
+  { type: EVENT.DANGER,   emoji: '⚡', label: 'Peligro',     color: 'amber',  flow: 'player'  },
+  { type: EVENT.SAVE,     emoji: '🧤', label: 'Parada',      color: 'sky',    flow: 'gksave'  },
+  { type: EVENT.BIG_SAVE, emoji: '🦁', label: 'Gran Parada', color: 'violet', flow: 'gksave'  },
+  { type: EVENT.YELLOW,   emoji: '🟨', label: 'Amarilla',    color: 'yellow', flow: 'card'    },
+  { type: EVENT.RED,      emoji: '🟥', label: 'Roja',        color: 'red',    flow: 'card'    },
+  { type: EVENT.SUB,      emoji: '🔄', label: 'Cambio',      color: 'violet', flow: 'sub'     },
+  { type: EVENT.OWN_GOAL, emoji: '🙈', label: 'P. Propia',   color: 'amber',  flow: 'player'  },
 ]
 
 export default function LiveMatch() {
   const navigate   = useNavigate()
   const { players: allPlayers } = useRosterStore()
-  const { match, elapsed, isLive, isTimerRunning, kickOff, pauseResume,
-          recordEvent, removeEvent, handleEndHalf, handleSecondHalf, handleFinish } = useMatchEngine()
   const { activeMatch } = useMatchStore()
 
-  // ── Lineup sync fix ──────────────────────────────────────────────────────
-  // Compute who is CURRENTLY on the pitch, updating as subs/reds happen.
-  const currentOnPitch = useMemo(() => {
-    if (!activeMatch?.lineup) return []
-    const onPitch = [...activeMatch.lineup]
-    for (const e of activeMatch.events ?? []) {
-      if (e.type === EVENT.SUB && e.playerId && e.subPlayerId) {
-        const i = onPitch.indexOf(e.playerId)
-        if (i !== -1) onPitch.splice(i, 1, e.subPlayerId)
-        else if (!onPitch.includes(e.subPlayerId)) onPitch.push(e.subPlayerId)
-      }
-      if (e.type === EVENT.RED && e.playerId) {
-        const i = onPitch.indexOf(e.playerId)
-        if (i !== -1) onPitch.splice(i, 1)
-      }
-    }
-    return onPitch
-  }, [activeMatch?.lineup, activeMatch?.events])
-
-  // Bench players not yet on pitch
-  const availableBench = useMemo(() => {
-    const pitchSet = new Set(currentOnPitch)
-    return (activeMatch?.bench ?? []).filter(id => !pitchSet.has(id))
-  }, [currentOnPitch, activeMatch?.bench])
+  // useMatchEngine is the canonical source for timer + on-pitch tracking
+  const {
+    match, elapsed, isLive, isTimerRunning,
+    activePlayers, availableBench,
+    kickOff, pauseResume, recordEvent, removeEvent,
+    handleEndHalf, handleSecondHalf, handleFinish,
+  } = useMatchEngine()
 
   // ── Modal / sheet state ──────────────────────────────────────────────────
   const [goalSheetOpen,        setGoalSheetOpen]        = useState(false)
@@ -78,18 +59,18 @@ export default function LiveMatch() {
   const handleActionPress = useCallback((action) => {
     if (!isLive) return
     switch (action.flow) {
-      case 'goal':         setGoalSheetOpen(true);                                 break
-      case 'goal_against': setGoalAgainstSheetOpen(true);                          break
-      case 'card':         setCardType(action.type); setCardSheetOpen(true);       break
-      case 'gksave':       handleGkSave(action.type);                              break
+      case 'goal':         setGoalSheetOpen(true);                                  break
+      case 'goal_against': setGoalAgainstSheetOpen(true);                           break
+      case 'card':         setCardType(action.type); setCardSheetOpen(true);        break
+      case 'gksave':       handleGkSave(action.type);                               break
       case 'sub':          setPending(action); setSubMode(false); setSelectorOpen(true); break
-      default:             setPending(action); setSelectorOpen(true);               break
+      default:             setPending(action); setSelectorOpen(true);                break
     }
   }, [isLive]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── GK save: auto-select if only 1 GK, otherwise open picker ────────────
+  // ── GK save: auto-select if only 1 GK on pitch ──────────────────────────
   const handleGkSave = useCallback((type) => {
-    const gks = currentOnPitch
+    const gks = activePlayers
       .map(id => allPlayers.find(p => p.id === id))
       .filter(p => p?.position === 'GK')
     if (gks.length === 1) {
@@ -98,7 +79,7 @@ export default function LiveMatch() {
       setPending({ type, flow: 'player', label: type === EVENT.SAVE ? 'Parada' : 'Gran Parada' })
       setSelectorOpen(true)
     }
-  }, [currentOnPitch, allPlayers, recordEvent])
+  }, [activePlayers, allPlayers, recordEvent])
 
   // ── Goal (our team) ──────────────────────────────────────────────────────
   const handleGoalSave = useCallback(({ playerId, assistPlayerId, goalType }) => {
@@ -239,37 +220,44 @@ export default function LiveMatch() {
         )}
       </div>
 
-      {/* ── Sheets ── */}
+      {/* ── Sheets ────────────────────────────────────────────────────────── */}
+
+      {/* Goal (our team) — scorer + assist + type */}
       <GoalSheet
         open={goalSheetOpen}
         onClose={() => setGoalSheetOpen(false)}
         onSave={handleGoalSave}
-        lineup={currentOnPitch}
+        lineup={activePlayers}
+        bench={availableBench}
         isTeamGoal
       />
 
-      {/* Goal against — just goal type, no scorer */}
+      {/* Goal against — type only */}
       <GoalSheet
         open={goalAgainstSheetOpen}
         onClose={() => setGoalAgainstSheetOpen(false)}
         onSave={handleGoalAgainstSave}
         lineup={[]}
+        bench={[]}
         isTeamGoal={false}
       />
 
+      {/* Card — on-pitch + bench always available */}
       <CardSheet
         open={cardSheetOpen}
         onClose={() => { setCardSheetOpen(false); setCardType(null) }}
         onSave={handleCardSave}
-        lineup={currentOnPitch}
+        lineup={activePlayers}
+        bench={availableBench}
         cardType={cardType}
       />
 
+      {/* Generic player selector (shots, danger, own goal, sub) */}
       <PlayerSelector
         open={selectorOpen}
         onClose={handleSelectorClose}
         onSelect={handlePlayerSelected}
-        lineup={pending?.flow === 'sub' && subMode ? availableBench : currentOnPitch}
+        lineup={pending?.flow === 'sub' && subMode ? availableBench : activePlayers}
         title={
           pending?.flow === 'sub'
             ? subMode ? `Entra → reemplaza a ${subOutPlayer?.name}` : 'Sale del campo'
